@@ -48,7 +48,7 @@ function renderStyles() {
 
 If you see the following error messages in your types, read the explanations below on how to fix them.
 
-## `Error: input CSS var names are too generic`
+### `Error: input CSS var names are too generic.`
 
 This happens if your input to `createCssVars` is too vague. This means that specific var names can't be extracted from the input object. This may happen if your input object has the vague key type of just `string`, like `Record<string, string>`. You need to make sure you use `as const` or somehow prevent TypeScript from broadening your input type.
 
@@ -90,9 +90,9 @@ const goodVarsSetup = wrapNarrowTypeWithTypeCheck<CssVarsSetup>()({
 export const myGoodVars2 = createCssVars(goodVarsSetup);
 ```
 
-## `Error: all CSS var names must be lower-kebab-case.`
+### `Error: all CSS var names must be lower-kebab-case.`
 
-Simple enough, all CSS var name keys must be in lower-kebab-case.
+All CSS var name keys must be in lower-kebab-case:
 
 <!-- example-link: src/readme-examples/invalid-css-var-names.example.ts -->
 

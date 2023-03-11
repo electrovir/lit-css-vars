@@ -39,19 +39,7 @@ describe(createCssVars.name, () => {
         assertTypeOf(examplesCssVars).toEqualTypeOf<CssVarNamesTooGenericError>();
     });
 
-    it('requires properly named keys', () => {
-        /**
-         * TS error expected if the input has invalid property keys. They must be kebab-lower-case,
-         * and the error message indicates that.
-         */
-        // @ts-expect-error
-        createCssVars({
-            'My-Var': 5,
-            'my-var-2': 1,
-        });
-    });
-
-    it('throws error if you actually input the error string', () => {
+    it('errors if you actually input the error string', () => {
         assertThrows(
             () =>
                 createCssVars(
@@ -61,15 +49,65 @@ describe(createCssVars.name, () => {
         );
     });
 
+    it('errors if a non-string CSS var name key is given', () => {
+        assertThrows(
+            () => {
+                // expect an error because the types catch that this input is invalid
+                // @ts-expect-error
+                return createCssVars({
+                    [Symbol('bad key')]: '4px',
+                });
+            },
+            {matchConstructor: Error},
+        );
+    });
+
+    it('errors if a non-kebab-lower CSS var name key is given', () => {
+        assertThrows(
+            () => {
+                // expect an error because the types catch that this input is invalid
+                // @ts-expect-error
+                return createCssVars({
+                    myVar: '4px',
+                });
+            },
+            {matchConstructor: Error},
+        );
+    });
+
     it('maps the given setup into useful CSS code', () => {
         const exampleValidCssVars = createCssVars({
-            'my-size': '40px',
             'my-color': 'blue',
+            'my-size': '40px',
         });
         assert.strictEqual(String(exampleValidCssVars['my-color'].name), '--my-color');
         assert.strictEqual(String(exampleValidCssVars['my-color'].value), 'var(--my-color, blue)');
 
         assert.strictEqual(String(exampleValidCssVars['my-size'].name), '--my-size');
         assert.strictEqual(String(exampleValidCssVars['my-size'].value), 'var(--my-size, 40px)');
+    });
+
+    it('handles leading dashes if they exist for some reason', () => {
+        const exampleValidCssVars = createCssVars({
+            '--my-color-with-double-dash': 'red',
+            '-my-size-with-single-dash': '2px',
+        });
+        assert.strictEqual(
+            String(exampleValidCssVars['--my-color-with-double-dash'].name),
+            '--my-color-with-double-dash',
+        );
+        assert.strictEqual(
+            String(exampleValidCssVars['--my-color-with-double-dash'].value),
+            'var(--my-color-with-double-dash, red)',
+        );
+
+        assert.strictEqual(
+            String(exampleValidCssVars['-my-size-with-single-dash'].name),
+            '--my-size-with-single-dash',
+        );
+        assert.strictEqual(
+            String(exampleValidCssVars['-my-size-with-single-dash'].value),
+            'var(--my-size-with-single-dash, 2px)',
+        );
     });
 });

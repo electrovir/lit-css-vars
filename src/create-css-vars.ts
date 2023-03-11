@@ -35,9 +35,9 @@ export type CssVarNamesInvalidError = 'Error: all CSS var names must be lower-ke
  *     // creates a CSS var with name 'my-var' and default value of 50px.
  *     const myVars = createCssVars({'my-var': '50px'});
  *     // using the CSS var name: this will be '--my-var'
- *     myVars['my-var'].name
+ *     myVars['my-var'].name;
  *     // accessing the CSS var value for CSS; this will be: 'var(--my-var, 50px)'
- *     myVars['my-var'].value
+ *     myVars['my-var'].value;
  */
 export function createCssVars<SpecificVars extends CssVarsSetup>(
     /**

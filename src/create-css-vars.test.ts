@@ -1,5 +1,6 @@
-import {assertThrows, assertTypeOf} from '@augment-vir/browser-testing';
-import {assert} from '@open-wc/testing';
+import {assertThrows, assertTypeOf, typedAssertInstanceOf} from '@augment-vir/browser-testing';
+import {assert, fixture as renderFixture} from '@open-wc/testing';
+import {css, html} from 'lit';
 import {
     createCssVars,
     CssVarName,
@@ -108,6 +109,52 @@ describe(createCssVars.name, () => {
         assert.strictEqual(
             String(exampleValidCssVars['-my-size-with-single-dash'].value),
             'var(--my-size-with-single-dash, 2px)',
+        );
+    });
+
+    it('produces valid css vars that cascade properly', async () => {
+        const myVars = createCssVars({
+            'my-color': 'blue',
+        });
+        const myStyles = css`
+            p {
+                ${myVars['my-color'].name}: red;
+            }
+
+            span {
+                color: ${myVars['my-color'].value};
+            }
+        `;
+
+        const wrapperElement: HTMLDivElement = await renderFixture(
+            html`
+                <div class="fixture-wrapper">
+                    <style>
+                        ${myStyles}
+                    </style>
+                    <span class="defaulted">This should be blue, the default CSS var value.</span>
+                    <p>
+                        <span class="overridden">
+                            This should be red, the overridden CSS var value.
+                        </span>
+                    </p>
+                </div>
+            `,
+        );
+
+        const shouldBeBlue = wrapperElement.querySelector('.defaulted');
+        const shouldBeRed = wrapperElement.querySelector('.overridden');
+
+        typedAssertInstanceOf(shouldBeBlue, HTMLSpanElement);
+        typedAssertInstanceOf(shouldBeRed, HTMLSpanElement);
+
+        assert.strictEqual(
+            globalThis.getComputedStyle(shouldBeBlue).getPropertyValue('color'),
+            'rgb(0, 0, 255)',
+        );
+        assert.strictEqual(
+            globalThis.getComputedStyle(shouldBeRed).getPropertyValue('color'),
+            'rgb(255, 0, 0)',
         );
     });
 });

@@ -1,1 +1,1 @@
-export * from './create-css-vars';
+export * from './define-css-vars';

@@ -1,8 +1,8 @@
 import {css} from 'lit';
-import {createCssVars} from '..';
+import {defineCssVars} from '..';
 
 // css vars definition
-export const myVars = createCssVars({
+export const myVars = defineCssVars({
     // key is CSS var name
     'my-var-name': 'blue', // value is the CSS var's default value
 });

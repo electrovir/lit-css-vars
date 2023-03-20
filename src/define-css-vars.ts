@@ -1,24 +1,26 @@
 import {
-    camelCaseToKebabCase,
-    isObject,
-    isRuntimeTypeOf,
-    mapObjectValues,
-    PropertyValueType,
+camelCaseToKebabCase,
+isObject,
+isRuntimeTypeOf,
+mapObjectValues,
+PropertyValueType
 } from '@augment-vir/common';
-import {css, CSSResult, unsafeCSS} from 'lit';
+import { css,CSSResult,unsafeCSS } from 'lit';
 
 /** Lower, kebab case requirement for CSS var names. */
 export type CssVarName = `${Lowercase<string>}-${Lowercase<string>}`;
 
-/** Base type for createCssVars's input. */
+/** Base type for defineCssVars's input. */
 export type CssVarsSetup = Readonly<Record<CssVarName, string | number | CSSResult>>;
 
-/** Output for createCssVars. */
+export type SingleCssVarDefinition = {
+    name: CSSResult;
+    value: CSSResult;
+};
+
+/** Output for defineCssVars. */
 export type CssVarDefinitions<SpecificSetup extends CssVarsSetup> = {
-    [KeyName in keyof SpecificSetup]: {
-        name: CSSResult;
-        value: CSSResult;
-    };
+    [KeyName in keyof SpecificSetup]: SingleCssVarDefinition;
 };
 
 export type CssVarNamesTooGenericError =
@@ -33,13 +35,13 @@ export type CssVarNamesInvalidError = 'Error: all CSS var names must be lower-ke
  *
  * @example
  *     // creates a CSS var with name 'my-var' and default value of 50px.
- *     const myVars = createCssVars({'my-var': '50px'});
+ *     const myVars = defineCssVars({'my-var': '50px'});
  *     // using the CSS var name: this will be '--my-var'
  *     myVars['my-var'].name;
  *     // accessing the CSS var value for CSS; this will be: 'var(--my-var, 50px)'
  *     myVars['my-var'].value;
  */
-export function createCssVars<SpecificVars extends CssVarsSetup>(
+export function defineCssVars<SpecificVars extends CssVarsSetup>(
     /**
      * The CSS var setup input. Keys of this input object become the CSS var names. Values of this
      * input become the default value of the CSS vars.
@@ -87,6 +89,6 @@ export function createCssVars<SpecificVars extends CssVarsSetup>(
 
         return cssVarDefinitions as any;
     } else {
-        throw new Error(`Invalid setup input for '${createCssVars.name}' function.`);
+        throw new Error(`Invalid setup input for '${defineCssVars.name}' function.`);
     }
 }

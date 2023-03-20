@@ -1,8 +1,8 @@
-import {createCssVars} from '..';
+import {defineCssVars} from '..';
 
 // expect errors because we're intentionally passing in invalid CSS var names as an example
 // @ts-expect-error
-export const myCssVars = createCssVars({
+export const myCssVars = defineCssVars({
     // good: kebab-lower-case
     'my-var-name': 'green',
     'my-var': 'green',

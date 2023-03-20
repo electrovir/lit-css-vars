@@ -14,10 +14,10 @@ npm i lit-css-vars
 
 ```TypeScript
 import {css} from 'lit';
-import {createCssVars} from 'lit-css-vars';
+import {defineCssVars} from 'lit-css-vars';
 
 // css vars definition
-export const myVars = createCssVars({
+export const myVars = defineCssVars({
     // key is CSS var name
     'my-var-name': 'blue', // value is the CSS var's default value
 });
@@ -56,7 +56,7 @@ This happens if your input to `createCssVars` is too vague. This means that spec
 
 ```TypeScript
 import {wrapNarrowTypeWithTypeCheck} from '@augment-vir/common';
-import {createCssVars, CssVarsSetup} from 'lit-css-vars';
+import {CssVarsSetup, defineCssVars} from 'lit-css-vars';
 
 /**
  * This fails because assigning the object to type CssVarsSetup kills the specific 'my-var-name' key
@@ -66,15 +66,15 @@ import {createCssVars, CssVarsSetup} from 'lit-css-vars';
 const BAD_VARS_SETUP_DO_NOT_USE: CssVarsSetup = {
     'my-var-name': 'blue',
 };
-// this errors because createCssVars knows its input is too broad
+// this errors because defineCssVars knows its input is too broad
 // @ts-expect-error
-export const BAD_VARS_DO_NOT_USE = createCssVars(BAD_VARS_SETUP_DO_NOT_USE);
+export const BAD_VARS_DO_NOT_USE = defineCssVars(BAD_VARS_SETUP_DO_NOT_USE);
 
 /**
- * This example works wonderfully because createCssVars does not broaden the input type but still
+ * This example works wonderfully because defineCssVars does not broaden the input type but still
  * holds it to a specific type requirement.
  */
-export const myGoodVars = createCssVars({
+export const myGoodVars = defineCssVars({
     'my-var-name': 'blue',
 });
 
@@ -82,12 +82,12 @@ export const myGoodVars = createCssVars({
  * This example works by using a helper function, wrapNarrowTypeWithTypeCheck, that requires the
  * input object to conform to the passed type (CssVarsSetup) without broadening the input type.
  * TypeScript thus knows that the exact key of goodVarsSetup is 'my-var-name' and all is well with
- * createCssVars below.
+ * defineCssVars below.
  */
 const goodVarsSetup = wrapNarrowTypeWithTypeCheck<CssVarsSetup>()({
     'my-var-name': 'blue',
 });
-export const myGoodVars2 = createCssVars(goodVarsSetup);
+export const myGoodVars2 = defineCssVars(goodVarsSetup);
 ```
 
 ### `Error: all CSS var names must be lower-kebab-case.`
@@ -97,11 +97,11 @@ All CSS var name keys must be in lower-kebab-case:
 <!-- example-link: src/readme-examples/invalid-css-var-names.example.ts -->
 
 ```TypeScript
-import {createCssVars} from 'lit-css-vars';
+import {defineCssVars} from 'lit-css-vars';
 
 // expect errors because we're intentionally passing in invalid CSS var names as an example
 // @ts-expect-error
-export const myCssVars = createCssVars({
+export const myCssVars = defineCssVars({
     // good: kebab-lower-case
     'my-var-name': 'green',
     'my-var': 'green',

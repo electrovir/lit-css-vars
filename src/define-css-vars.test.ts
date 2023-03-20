@@ -2,11 +2,11 @@ import {assertThrows, assertTypeOf, typedAssertInstanceOf} from '@augment-vir/br
 import {assert, fixture as renderFixture} from '@open-wc/testing';
 import {css, html} from 'lit';
 import {
-    createCssVars,
     CssVarName,
     CssVarNamesTooGenericError,
     CssVarsSetup,
-} from './create-css-vars';
+    defineCssVars,
+} from './define-css-vars';
 
 describe('CssVarName', () => {
     it('restricts strings', () => {
@@ -17,9 +17,9 @@ describe('CssVarName', () => {
     });
 });
 
-describe(createCssVars.name, () => {
+describe(defineCssVars.name, () => {
     it('maintains input keys', () => {
-        const examplesCssVars = createCssVars({
+        const examplesCssVars = defineCssVars({
             'my-var': 5,
             'my-var-2': 1,
         });
@@ -36,14 +36,14 @@ describe(createCssVars.name, () => {
          * packaged for typed CSS vars in the first place.
          */
         // @ts-expect-error
-        const examplesCssVars = createCssVars(exampleSetup);
+        const examplesCssVars = defineCssVars(exampleSetup);
         assertTypeOf(examplesCssVars).toEqualTypeOf<CssVarNamesTooGenericError>();
     });
 
     it('errors if you actually input the error string', () => {
         assertThrows(
             () =>
-                createCssVars(
+                defineCssVars(
                     "Error: input CSS var names are too generic. See 'lit-css-vars' package documentation for details.",
                 ),
             {matchConstructor: Error},
@@ -55,7 +55,7 @@ describe(createCssVars.name, () => {
             () => {
                 // expect an error because the types catch that this input is invalid
                 // @ts-expect-error
-                return createCssVars({
+                return defineCssVars({
                     [Symbol('bad key')]: '4px',
                 });
             },
@@ -68,7 +68,7 @@ describe(createCssVars.name, () => {
             () => {
                 // expect an error because the types catch that this input is invalid
                 // @ts-expect-error
-                return createCssVars({
+                return defineCssVars({
                     myVar: '4px',
                 });
             },
@@ -77,7 +77,7 @@ describe(createCssVars.name, () => {
     });
 
     it('maps the given setup into useful CSS code', () => {
-        const exampleValidCssVars = createCssVars({
+        const exampleValidCssVars = defineCssVars({
             'my-color': 'blue',
             'my-size': '40px',
         });
@@ -89,7 +89,7 @@ describe(createCssVars.name, () => {
     });
 
     it('handles leading dashes if they exist for some reason', () => {
-        const exampleValidCssVars = createCssVars({
+        const exampleValidCssVars = defineCssVars({
             '--my-color-with-double-dash': 'red',
             '-my-size-with-single-dash': '2px',
         });
@@ -113,7 +113,7 @@ describe(createCssVars.name, () => {
     });
 
     it('produces valid css vars that cascade properly', async () => {
-        const myVars = createCssVars({
+        const myVars = defineCssVars({
             'my-color': 'blue',
         });
         const myStyles = css`

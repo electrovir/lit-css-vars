@@ -1,11 +1,11 @@
 import {
-camelCaseToKebabCase,
-isObject,
-isRuntimeTypeOf,
-mapObjectValues,
-PropertyValueType
+    camelCaseToKebabCase,
+    isObject,
+    isRuntimeTypeOf,
+    mapObjectValues,
+    PropertyValueType,
 } from '@augment-vir/common';
-import { css,CSSResult,unsafeCSS } from 'lit';
+import {css, CSSResult, unsafeCSS} from 'lit';
 
 /** Lower, kebab case requirement for CSS var names. */
 export type CssVarName = `${Lowercase<string>}-${Lowercase<string>}`;
@@ -16,6 +16,7 @@ export type CssVarsSetup = Readonly<Record<CssVarName, string | number | CSSResu
 export type SingleCssVarDefinition = {
     name: CSSResult;
     value: CSSResult;
+    default: string;
 };
 
 /** Output for defineCssVars. */
@@ -59,7 +60,7 @@ export function defineCssVars<SpecificVars extends CssVarsSetup>(
     if (isObject(setup)) {
         const cssVarDefinitions: CssVarDefinitions<CssVarsSetup> = mapObjectValues(
             setup,
-            (key, value): PropertyValueType<CssVarDefinitions<any>> => {
+            (key, rawInputValue): PropertyValueType<CssVarDefinitions<any>> => {
                 if (!isRuntimeTypeOf(key, 'string')) {
                     throw new Error(
                         `Invalid CSS var name '${String(
@@ -74,6 +75,8 @@ export function defineCssVars<SpecificVars extends CssVarsSetup>(
                     );
                 }
 
+                const defaultValue = rawInputValue as string | number | CSSResult;
+
                 const cssVarNameCssResult = key.startsWith('--')
                     ? unsafeCSS(key)
                     : key.startsWith('-')
@@ -82,7 +85,8 @@ export function defineCssVars<SpecificVars extends CssVarsSetup>(
 
                 return {
                     name: cssVarNameCssResult,
-                    value: css`var(${cssVarNameCssResult}, ${unsafeCSS(value)})`,
+                    value: css`var(${cssVarNameCssResult}, ${unsafeCSS(defaultValue)})`,
+                    default: String(defaultValue),
                 };
             },
         );

@@ -1,6 +1,6 @@
 {
     "name": "lit-css-vars",
-    "version": "2.0.2",
+    "version": "2.0.3",
     "description": "For easily creating and sharing typed CSS vars for the lit.dev ecosystem.",
     "keywords": [
         "css vars",
@@ -41,11 +41,11 @@
         "test:types": "tsc --noEmit"
     },
     "dependencies": {
-        "@augment-vir/common": "^13.3.0"
+        "@augment-vir/common": "^14.2.0"
     },
     "devDependencies": {
-        "@augment-vir/browser": "^13.3.0",
-        "@augment-vir/browser-testing": "^13.3.0",
+        "@augment-vir/browser": "^14.2.0",
+        "@augment-vir/browser-testing": "^14.2.0",
         "@open-wc/testing": "^3.1.8",
         "@types/mocha": "^10.0.1",
         "@web/dev-server-esbuild": "^0.4.1",
@@ -54,10 +54,10 @@
         "@web/test-runner-playwright": "^0.10.0",
         "@web/test-runner-visual-regression": "^0.8.0",
         "cspell": "^6.31.1",
-        "esbuild": "^0.17.18",
+        "esbuild": "^0.17.19",
         "istanbul-smart-text-reporter": "^1.1.1",
         "markdown-code-example-inserter": "^0.3.0",
-        "npm-check-updates": "^16.10.9",
+        "npm-check-updates": "^16.10.12",
         "prettier": "^2.8.8",
         "prettier-plugin-interpolated-html-tags": "^0.0.3",
         "prettier-plugin-jsdoc": "^0.4.2",
@@ -67,7 +67,7 @@
         "prettier-plugin-sort-json": "^1.0.0",
         "prettier-plugin-toml": "^0.3.1",
         "typescript": "^5.0.4",
-        "virmator": "^6.4.4"
+        "virmator": "^6.6.0"
     },
     "peerDependencies": {
         "lit": ">=2.x"

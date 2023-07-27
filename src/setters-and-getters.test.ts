@@ -1,5 +1,6 @@
-import {addPx, randomInteger} from '@augment-vir/browser';
+import {randomInteger} from '@augment-vir/browser';
 import {typedAssertInstanceOf} from '@augment-vir/browser-testing';
+import {addPx} from '@augment-vir/common';
 import {assert, fixture as renderFixture} from '@open-wc/testing';
 import {html} from 'lit';
 import {defineCssVars} from './define-css-vars';

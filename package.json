@@ -1,6 +1,6 @@
 {
     "name": "lit-css-vars",
-    "version": "2.0.3",
+    "version": "2.1.0",
     "description": "For easily creating and sharing typed CSS vars for the lit.dev ecosystem.",
     "keywords": [
         "css vars",

@@ -1,19 +1,20 @@
 import {assertThrows, assertTypeOf, typedAssertInstanceOf} from '@augment-vir/browser-testing';
 import {assert, fixture as renderFixture} from '@open-wc/testing';
-import {css, html} from 'lit';
+import {CSSResult, css, html, unsafeCSS} from 'lit';
 import {
     CssVarName,
     CssVarNamesTooGenericError,
     CssVarsSetup,
+    SingleCssVarDefinition,
     defineCssVars,
 } from './define-css-vars';
 
 describe('CssVarName', () => {
     it('restricts strings', () => {
         assertTypeOf<'my-var'>().toMatchTypeOf<CssVarName>();
+        assertTypeOf<'my'>().toMatchTypeOf<CssVarName>();
         assertTypeOf<'My-VaR'>().not.toMatchTypeOf<CssVarName>();
         assertTypeOf<'myVar'>().not.toMatchTypeOf<CssVarName>();
-        assertTypeOf<'my'>().not.toMatchTypeOf<CssVarName>();
     });
 });
 
@@ -156,5 +157,100 @@ describe(defineCssVars.name, () => {
             globalThis.getComputedStyle(shouldBeRed).getPropertyValue('color'),
             'rgb(255, 0, 0)',
         );
+    });
+
+    it('allows defining singly nested css vars', () => {
+        const myVars = defineCssVars({
+            'my-var': 'blue',
+            stuff: {
+                'nested-var': 'orange',
+            },
+        });
+
+        assertTypeOf(myVars.stuff['nested-var'].value).toEqualTypeOf<CSSResult>();
+
+        assertTypeOf(myVars).toEqualTypeOf<{
+            'my-var': SingleCssVarDefinition;
+            stuff: {
+                'nested-var': SingleCssVarDefinition;
+            };
+        }>();
+
+        assert.deepStrictEqual(myVars, {
+            'my-var': {
+                default: 'blue',
+                name: css`--${unsafeCSS('my-var')}`,
+                value: css`var(${unsafeCSS('--my-var')}, ${unsafeCSS('blue')})`,
+            },
+            stuff: {
+                'nested-var': {
+                    default: 'orange',
+                    name: css`--${unsafeCSS('stuff-nested-var')}`,
+                    value: css`var(${unsafeCSS('--stuff-nested-var')}, ${unsafeCSS('orange')})`,
+                },
+            },
+        });
+    });
+
+    it('fails if there is an empty default value', () => {
+        assertThrows(() =>
+            defineCssVars({
+                'my-var': '',
+            }),
+        );
+    });
+
+    it('allows defining triple nested css vars', () => {
+        const myVars = defineCssVars({
+            'my-var': 'blue',
+            stuff: {
+                'more-stuff': {
+                    'even-more-stuff': {
+                        'super-nested-var': 'orange',
+                    },
+                },
+                'nested-var': 'orange',
+            },
+        });
+
+        assertTypeOf(myVars).toEqualTypeOf<{
+            'my-var': SingleCssVarDefinition;
+            stuff: {
+                'more-stuff': {
+                    'even-more-stuff': {
+                        'super-nested': SingleCssVarDefinition;
+                    };
+                };
+                'nested-var': SingleCssVarDefinition;
+            };
+        }>();
+
+        assert.deepStrictEqual(myVars, {
+            'my-var': {
+                default: 'blue',
+                name: css`--${unsafeCSS('my-var')}`,
+                value: css`var(${unsafeCSS('--my-var')}, ${unsafeCSS('blue')})`,
+            },
+            stuff: {
+                'more-stuff': {
+                    'even-more-stuff': {
+                        'super-nested-var': {
+                            default: 'orange',
+                            name: css`--${unsafeCSS(
+                                'stuff-more-stuff-even-more-stuff-super-nested-var',
+                            )}`,
+                            value: css`var(${unsafeCSS(
+                                '--stuff-more-stuff-even-more-stuff-super-nested-var',
+                            )}, ${unsafeCSS('orange')})`,
+                        },
+                    },
+                },
+                'nested-var': {
+                    default: 'orange',
+                    name: css`--${unsafeCSS('stuff-nested-var')}`,
+                    value: css`var(${unsafeCSS('--stuff-nested-var')}, ${unsafeCSS('orange')})`,
+                },
+            },
+        });
     });
 });

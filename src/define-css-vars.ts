@@ -8,15 +8,10 @@ import {
 import {css, CSSResult, unsafeCSS} from 'lit';
 
 /** Lower, kebab case requirement for CSS var names. */
-export type CssVarName = `${Lowercase<string>}-${Lowercase<string>}` | Lowercase<string>;
+export type CssVarName = `${Lowercase<string>}-${Lowercase<string>}`;
 
-export type CssVarValue = string | number | CSSResult;
-
-/**
- * Base type for defineCssVars's input. This needs to be looser than the types accepted by
- * defineCssVars.
- */
-export type CssVarsSetup = {[name: CssVarName]: CssVarValue | CssVarsSetup};
+/** Base type for defineCssVars's input. */
+export type CssVarsSetup = Readonly<Record<CssVarName, string | number | CSSResult>>;
 
 export type SingleCssVarDefinition = {
     name: CSSResult;
@@ -24,52 +19,14 @@ export type SingleCssVarDefinition = {
     default: string;
 };
 
-export type CheckCssVarsDefinitionOutput<
-    SpecificSetup extends CssVarsSetup | CssVarNamesNonKebabError | CssVarNamesTooGenericError,
-> = CssVarNamesNonKebabError extends SpecificSetup
-    ? CssVarNamesNonKebabError
-    : CssVarNamesTooGenericError extends SpecificSetup
-    ? CssVarNamesTooGenericError
-    : SpecificSetup extends CssVarsSetup
-    ? CssVarDefinitions<SpecificSetup>
-    : never;
-
 /** Output for defineCssVars. */
 export type CssVarDefinitions<SpecificSetup extends CssVarsSetup> = {
-    [KeyName in keyof SpecificSetup]: Exclude<
-        SpecificSetup[KeyName],
-        CSSResult
-    > extends CssVarsSetup
-        ? CssVarDefinitions<Exclude<SpecificSetup[KeyName], CSSResult>>
-        : SingleCssVarDefinition;
+    [KeyName in keyof SpecificSetup]: SingleCssVarDefinition;
 };
 
 export type CssVarNamesTooGenericError =
     "Error: input CSS var names are too generic. See 'lit-css-vars' package documentation for details.";
-export type CssVarNamesNonKebabError = 'Error: all CSS var names must be lower-kebab-case.';
-
-export type ValidateCssVarsSetup<SpecificVars extends CssVarsSetup> = SpecificVars extends never
-    ? never
-    : keyof SpecificVars extends CssVarName
-    ? CssVarName extends keyof SpecificVars
-        ? CssVarNamesTooGenericError
-        : CssVarNamesTooGenericError extends ValidateCssVarsSetup<
-              Extract<Exclude<PropertyValueType<SpecificVars>, CssVarValue>, CssVarsSetup>
-          >
-        ? CssVarNamesTooGenericError
-        : CssVarNamesNonKebabError extends ValidateCssVarsSetup<
-              Extract<Exclude<PropertyValueType<SpecificVars>, CssVarValue>, CssVarsSetup>
-          >
-        ? CssVarNamesNonKebabError
-        : SpecificVars
-    : CssVarNamesNonKebabError;
-
-export type ValidateCssVarsSetup2<SpecificVars extends CssVarsSetup> =
-    keyof SpecificVars extends CssVarName
-        ? CssVarName extends keyof SpecificVars
-            ? CssVarNamesTooGenericError
-            : SpecificVars
-        : CssVarNamesNonKebabError;
+export type CssVarNamesInvalidError = 'Error: all CSS var names must be lower-kebab-case.';
 
 /**
  * Creates an easy-to-use-in-lit mapping of the given CSS Var names and defaults. The input
@@ -85,24 +42,23 @@ export type ValidateCssVarsSetup2<SpecificVars extends CssVarsSetup> =
  *     // accessing the CSS var value for CSS; this will be: 'var(--my-var, 50px)'
  *     myVars['my-var'].value;
  */
-export function defineCssVars<const SpecificVars extends CssVarsSetup>(
+export function defineCssVars<SpecificVars extends CssVarsSetup>(
     /**
      * The CSS var setup input. Keys of this input object become the CSS var names. Values of this
      * input become the default value of the CSS vars.
      */
-    setup: ValidateCssVarsSetup<SpecificVars>,
-): CheckCssVarsDefinitionOutput<ValidateCssVarsSetup<SpecificVars>> {
-    return internalDefineCssVars(setup, []) as CheckCssVarsDefinitionOutput<
-        ValidateCssVarsSetup<SpecificVars>
-    >;
-}
-
-function internalDefineCssVars(
-    setup: CssVarsSetup | string,
-    parentKeys: string[],
-): CssVarDefinitions<CssVarsSetup> {
+    setup: keyof SpecificVars extends CssVarName
+        ? CssVarName extends keyof SpecificVars
+            ? CssVarNamesTooGenericError
+            : SpecificVars
+        : CssVarNamesInvalidError,
+): keyof SpecificVars extends CssVarName
+    ? CssVarName extends keyof SpecificVars
+        ? CssVarNamesTooGenericError
+        : CssVarDefinitions<SpecificVars>
+    : CssVarNamesInvalidError {
     if (isObject(setup)) {
-        const cssVarDefinitions: CssVarDefinitions<any> = mapObjectValues(
+        const cssVarDefinitions: CssVarDefinitions<CssVarsSetup> = mapObjectValues(
             setup,
             (key, rawInputValue): PropertyValueType<CssVarDefinitions<any>> => {
                 if (!isRuntimeTypeOf(key, 'string')) {
@@ -112,52 +68,30 @@ function internalDefineCssVars(
                         )}' given. CSS var names must be strings.`,
                     );
                 }
-
-                if (
-                    isRuntimeTypeOf(rawInputValue, 'object') &&
-                    !('_$cssResult$' in rawInputValue)
-                ) {
-                    return internalDefineCssVars(rawInputValue, [
-                        ...parentKeys,
-                        key,
-                    ]);
-                } else {
-                    const kebabKey = camelCaseToKebabCase(key).toLowerCase();
-                    if (kebabKey !== key) {
-                        throw new Error(
-                            `Invalid CSS var name '${key}' given. CSS var names must be in lower kebab case.`,
-                        );
-                    }
-
-                    const defaultValue = rawInputValue as string | number | CSSResult;
-
-                    if (!defaultValue) {
-                        throw new Error(`Default value for css var setup key '${key}' is empty.`);
-                    }
-
-                    const varName = [
-                        ...parentKeys,
-                        key,
-                    ].join('-');
-
-                    const cssVarNameCssResult = varName.startsWith('--')
-                        ? unsafeCSS(varName)
-                        : varName.startsWith('-')
-                        ? css`-${unsafeCSS(varName)}`
-                        : css`--${unsafeCSS(varName)}`;
-
-                    const varDefinition: SingleCssVarDefinition = {
-                        name: cssVarNameCssResult,
-                        value: css`var(${cssVarNameCssResult}, ${unsafeCSS(defaultValue)})`,
-                        default: String(defaultValue),
-                    };
-
-                    return varDefinition as PropertyValueType<CssVarDefinitions<CssVarsSetup>>;
+                const kebabKey = camelCaseToKebabCase(key).toLowerCase();
+                if (kebabKey !== key) {
+                    throw new Error(
+                        `Invalid CSS var name '${key}' given. CSS var names must be in lower kebab case.`,
+                    );
                 }
+
+                const defaultValue = rawInputValue as string | number | CSSResult;
+
+                const cssVarNameCssResult = key.startsWith('--')
+                    ? unsafeCSS(key)
+                    : key.startsWith('-')
+                    ? css`-${unsafeCSS(key)}`
+                    : css`--${unsafeCSS(key)}`;
+
+                return {
+                    name: cssVarNameCssResult,
+                    value: css`var(${cssVarNameCssResult}, ${unsafeCSS(defaultValue)})`,
+                    default: String(defaultValue),
+                };
             },
         );
 
-        return cssVarDefinitions as CssVarDefinitions<CssVarsSetup>;
+        return cssVarDefinitions as any;
     } else {
         throw new Error(`Invalid setup input for '${defineCssVars.name}' function.`);
     }

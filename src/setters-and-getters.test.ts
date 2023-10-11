@@ -1,8 +1,7 @@
-import {randomInteger} from '@augment-vir/browser';
-import {typedAssertInstanceOf} from '@augment-vir/browser-testing';
-import {addPx} from '@augment-vir/common';
+import {addPx, randomInteger} from '@augment-vir/common';
 import {assert, fixture as renderFixture} from '@open-wc/testing';
 import {html} from 'lit';
+import {assertInstanceOf} from 'run-time-assertions';
 import {defineCssVars} from './define-css-vars';
 import {applyCssVar, readCssVarValue, setCssVarValue} from './setters-and-getters';
 
@@ -139,7 +138,7 @@ describe(readCssVarValue.name, () => {
 
         const childElement = wrapperElement.querySelector('.child-element');
 
-        typedAssertInstanceOf(childElement, HTMLDivElement);
+        assertInstanceOf(childElement, HTMLDivElement);
 
         return {childElement, wrapperElement, cssVarValue};
     }

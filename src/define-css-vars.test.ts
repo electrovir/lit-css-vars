@@ -1,6 +1,7 @@
-import {assertThrows, assertTypeOf, typedAssertInstanceOf} from '@augment-vir/browser-testing';
+import {assertThrows, assertTypeOf} from '@augment-vir/browser-testing';
 import {assert, fixture as renderFixture} from '@open-wc/testing';
 import {css, html} from 'lit';
+import {assertInstanceOf} from 'run-time-assertions';
 import {
     CssVarName,
     CssVarNamesTooGenericError,
@@ -145,8 +146,8 @@ describe(defineCssVars.name, () => {
         const shouldBeBlue = wrapperElement.querySelector('.defaulted');
         const shouldBeRed = wrapperElement.querySelector('.overridden');
 
-        typedAssertInstanceOf(shouldBeBlue, HTMLSpanElement);
-        typedAssertInstanceOf(shouldBeRed, HTMLSpanElement);
+        assertInstanceOf(shouldBeBlue, HTMLSpanElement);
+        assertInstanceOf(shouldBeRed, HTMLSpanElement);
 
         assert.strictEqual(
             globalThis.getComputedStyle(shouldBeBlue).getPropertyValue('color'),

@@ -1,11 +1,11 @@
 import {
     camelCaseToKebabCase,
     isObject,
-    isRuntimeTypeOf,
     mapObjectValues,
     PropertyValueType,
 } from '@augment-vir/common';
 import {css, CSSResult, unsafeCSS} from 'lit';
+import {isRunTimeType} from 'run-time-assertions';
 
 /** Lower, kebab case requirement for CSS var names. */
 export type CssVarName = `${Lowercase<string>}-${Lowercase<string>}`;
@@ -61,7 +61,7 @@ export function defineCssVars<SpecificVars extends CssVarsSetup>(
         const cssVarDefinitions: CssVarDefinitions<CssVarsSetup> = mapObjectValues(
             setup,
             (key, rawInputValue): PropertyValueType<CssVarDefinitions<any>> => {
-                if (!isRuntimeTypeOf(key, 'string')) {
+                if (!isRunTimeType(key, 'string')) {
                     throw new Error(
                         `Invalid CSS var name '${String(
                             key,
@@ -80,8 +80,8 @@ export function defineCssVars<SpecificVars extends CssVarsSetup>(
                 const cssVarNameCssResult = key.startsWith('--')
                     ? unsafeCSS(key)
                     : key.startsWith('-')
-                    ? css`-${unsafeCSS(key)}`
-                    : css`--${unsafeCSS(key)}`;
+                      ? css`-${unsafeCSS(key)}`
+                      : css`--${unsafeCSS(key)}`;
 
                 return {
                     name: cssVarNameCssResult,

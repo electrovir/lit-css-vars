@@ -18,14 +18,12 @@ const exampleProperty = 'padding-top';
 
 describe(setCssVarValue.name, () => {
     it('sets css var values', async () => {
-        const wrapperElement: HTMLDivElement = await renderFixture(
-            html`
-                <div
-                    style=${`${exampleProperty}: ${exampleCssVars['my-var'].value}`}
-                    class="fixture-wrapper"
-                ></div>
-            `,
-        );
+        const wrapperElement: HTMLDivElement = await renderFixture(html`
+            <div
+                style=${`${exampleProperty}: ${exampleCssVars['my-var'].value}`}
+                class="fixture-wrapper"
+            ></div>
+        `);
 
         const beforeSetCssVarValue = globalThis
             .getComputedStyle(wrapperElement)
@@ -60,11 +58,9 @@ describe(setCssVarValue.name, () => {
 describe(applyCssVar.name, () => {
     it("uses the CSS var's value", async () => {
         const initialValue = addPx(randomInteger({min: 1, max: 100}));
-        const wrapperElement: HTMLDivElement = await renderFixture(
-            html`
-                <div style=${`${exampleProperty}: ${initialValue};`} class="fixture-wrapper"></div>
-            `,
-        );
+        const wrapperElement: HTMLDivElement = await renderFixture(html`
+            <div style=${`${exampleProperty}: ${initialValue};`} class="fixture-wrapper"></div>
+        `);
 
         const beforeApplyingCssVar = globalThis
             .getComputedStyle(wrapperElement)
@@ -125,16 +121,14 @@ describe(applyCssVar.name, () => {
 describe(readCssVarValue.name, () => {
     async function createFixtureTestWithChild() {
         const cssVarValue = addPx(randomInteger({min: 1, max: 100}));
-        const wrapperElement: HTMLDivElement = await renderFixture(
-            html`
-                <div
-                    style=${`${exampleCssVars['my-var'].name}: ${cssVarValue};`}
-                    class="fixture-wrapper"
-                >
-                    <div class="child-element"></div>
-                </div>
-            `,
-        );
+        const wrapperElement: HTMLDivElement = await renderFixture(html`
+            <div
+                style=${`${exampleCssVars['my-var'].name}: ${cssVarValue};`}
+                class="fixture-wrapper"
+            >
+                <div class="child-element"></div>
+            </div>
+        `);
 
         const childElement = wrapperElement.querySelector('.child-element');
 

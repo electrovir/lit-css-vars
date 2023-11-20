@@ -1,7 +1,6 @@
-import {assertThrows, assertTypeOf} from '@augment-vir/browser-testing';
 import {assert, fixture as renderFixture} from '@open-wc/testing';
 import {css, html} from 'lit';
-import {assertInstanceOf} from 'run-time-assertions';
+import {assertInstanceOf, assertThrows, assertTypeOf} from 'run-time-assertions';
 import {
     CssVarName,
     CssVarNamesTooGenericError,
@@ -127,21 +126,19 @@ describe(defineCssVars.name, () => {
             }
         `;
 
-        const wrapperElement: HTMLDivElement = await renderFixture(
-            html`
-                <div class="fixture-wrapper">
-                    <style>
-                        ${myStyles}
-                    </style>
-                    <span class="defaulted">This should be blue, the default CSS var value.</span>
-                    <p>
-                        <span class="overridden">
-                            This should be red, the overridden CSS var value.
-                        </span>
-                    </p>
-                </div>
-            `,
-        );
+        const wrapperElement: HTMLDivElement = await renderFixture(html`
+            <div class="fixture-wrapper">
+                <style>
+                    ${myStyles}
+                </style>
+                <span class="defaulted">This should be blue, the default CSS var value.</span>
+                <p>
+                    <span class="overridden">
+                        This should be red, the overridden CSS var value.
+                    </span>
+                </p>
+            </div>
+        `);
 
         const shouldBeBlue = wrapperElement.querySelector('.defaulted');
         const shouldBeRed = wrapperElement.querySelector('.overridden');

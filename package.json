@@ -1,6 +1,6 @@
 {
     "name": "lit-css-vars",
-    "version": "3.0.4",
+    "version": "3.0.5",
     "description": "For easily creating and sharing typed CSS vars for the lit.dev ecosystem.",
     "keywords": [
         "css vars",
@@ -75,6 +75,6 @@
         "virmator": "^11.1.2"
     },
     "peerDependencies": {
-        "lit": ">=2.8"
+        "lit": "*"
     }
 }

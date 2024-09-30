@@ -55,7 +55,6 @@ This happens if your input to `createCssVars` is too vague. This means that spec
 <!-- example-link: src/readme-examples/keys-too-generic.example.ts -->
 
 ```TypeScript
-import {wrapNarrowTypeWithTypeCheck} from '@augment-vir/common';
 import {CssVarsSetup, defineCssVars} from 'lit-css-vars';
 
 /**
@@ -66,8 +65,8 @@ import {CssVarsSetup, defineCssVars} from 'lit-css-vars';
 const BAD_VARS_SETUP_DO_NOT_USE: CssVarsSetup = {
     'my-var-name': 'blue',
 };
-// this errors because defineCssVars knows its input is too broad
-// @ts-expect-error
+
+// @ts-expect-error: this errors because defineCssVars knows its input is too broad
 export const BAD_VARS_DO_NOT_USE = defineCssVars(BAD_VARS_SETUP_DO_NOT_USE);
 
 /**
@@ -84,9 +83,9 @@ export const myGoodVars = defineCssVars({
  * TypeScript thus knows that the exact key of goodVarsSetup is 'my-var-name' and all is well with
  * defineCssVars below.
  */
-const goodVarsSetup = wrapNarrowTypeWithTypeCheck<CssVarsSetup>()({
+const goodVarsSetup = {
     'my-var-name': 'blue',
-});
+} satisfies CssVarsSetup;
 export const myGoodVars2 = defineCssVars(goodVarsSetup);
 ```
 
@@ -99,8 +98,7 @@ All CSS var name keys must be in lower-kebab-case:
 ```TypeScript
 import {defineCssVars} from 'lit-css-vars';
 
-// expect errors because we're intentionally passing in invalid CSS var names as an example
-// @ts-expect-error
+// @ts-expect-error: expect errors because we're intentionally passing in invalid CSS var names as an example
 export const myCssVars = defineCssVars({
     // good: kebab-lower-case
     'my-var-name': 'green',

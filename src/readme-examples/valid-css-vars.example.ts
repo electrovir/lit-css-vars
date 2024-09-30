@@ -1,5 +1,5 @@
 import {css} from 'lit';
-import {defineCssVars} from '..';
+import {defineCssVars} from '../index.js';
 
 // css vars definition
 export const myVars = defineCssVars({

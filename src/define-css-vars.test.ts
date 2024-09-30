@@ -1,19 +1,19 @@
-import {assert, fixture as renderFixture} from '@open-wc/testing';
+import {assert} from '@augment-vir/assert';
+import {describe, it, testWeb} from '@augment-vir/test';
 import {css, html} from 'lit';
-import {assertInstanceOf, assertThrows, assertTypeOf} from 'run-time-assertions';
 import {
     CssVarName,
     CssVarNamesTooGenericError,
     CssVarsSetup,
     defineCssVars,
-} from './define-css-vars';
+} from './define-css-vars.js';
 
 describe('CssVarName', () => {
     it('restricts strings', () => {
-        assertTypeOf<'my-var'>().toMatchTypeOf<CssVarName>();
-        assertTypeOf<'My-VaR'>().not.toMatchTypeOf<CssVarName>();
-        assertTypeOf<'myVar'>().not.toMatchTypeOf<CssVarName>();
-        assertTypeOf<'my'>().not.toMatchTypeOf<CssVarName>();
+        assert.tsType<'my-var'>().matches<CssVarName>();
+        assert.tsType<'My-VaR'>().notMatches<CssVarName>();
+        assert.tsType<'myVar'>().notMatches<CssVarName>();
+        assert.tsType<'my'>().notMatches<CssVarName>();
     });
 });
 
@@ -23,7 +23,7 @@ describe(defineCssVars.name, () => {
             'my-var': 5,
             'my-var-2': 1,
         });
-        assertTypeOf<keyof typeof examplesCssVars>().toEqualTypeOf<'my-var' | 'my-var-2'>();
+        assert.tsType<keyof typeof examplesCssVars>().equals<'my-var' | 'my-var-2'>();
     });
 
     it('creates error type when input names are too generic', () => {
@@ -31,17 +31,13 @@ describe(defineCssVars.name, () => {
             'my-var': 5,
             'my-var-2': 1,
         };
-        /**
-         * TS error expected if the input is too generic (which defeats the purpose of using this
-         * packaged for typed CSS vars in the first place.
-         */
-        // @ts-expect-error
+        // @ts-expect-error: error expected if the input is too generic
         const examplesCssVars = defineCssVars(exampleSetup);
-        assertTypeOf(examplesCssVars).toEqualTypeOf<CssVarNamesTooGenericError>();
+        assert.tsType(examplesCssVars).equals<CssVarNamesTooGenericError>();
     });
 
     it('errors if you actually input the error string', () => {
-        assertThrows(
+        assert.throws(
             () =>
                 defineCssVars(
                     "Error: input CSS var names are too generic. See 'lit-css-vars' package documentation for details.",
@@ -51,10 +47,9 @@ describe(defineCssVars.name, () => {
     });
 
     it('errors if a non-string CSS var name key is given', () => {
-        assertThrows(
+        assert.throws(
             () => {
-                // expect an error because the types catch that this input is invalid
-                // @ts-expect-error
+                // @ts-expect-error: expect an error because the types catch that this input is invalid
                 return defineCssVars({
                     [Symbol('bad key')]: '4px',
                 });
@@ -64,10 +59,9 @@ describe(defineCssVars.name, () => {
     });
 
     it('errors if a non-kebab-lower CSS var name key is given', () => {
-        assertThrows(
+        assert.throws(
             () => {
-                // expect an error because the types catch that this input is invalid
-                // @ts-expect-error
+                // @ts-expect-error: expect an error because the types catch that this input is invalid
                 return defineCssVars({
                     myVar: '4px',
                 });
@@ -81,11 +75,11 @@ describe(defineCssVars.name, () => {
             'my-color': 'blue',
             'my-size': '40px',
         });
-        assert.strictEqual(String(exampleValidCssVars['my-color'].name), '--my-color');
-        assert.strictEqual(String(exampleValidCssVars['my-color'].value), 'var(--my-color, blue)');
+        assert.strictEquals(String(exampleValidCssVars['my-color'].name), '--my-color');
+        assert.strictEquals(String(exampleValidCssVars['my-color'].value), 'var(--my-color, blue)');
 
-        assert.strictEqual(String(exampleValidCssVars['my-size'].name), '--my-size');
-        assert.strictEqual(String(exampleValidCssVars['my-size'].value), 'var(--my-size, 40px)');
+        assert.strictEquals(String(exampleValidCssVars['my-size'].name), '--my-size');
+        assert.strictEquals(String(exampleValidCssVars['my-size'].value), 'var(--my-size, 40px)');
     });
 
     it('handles leading dashes if they exist for some reason', () => {
@@ -93,20 +87,20 @@ describe(defineCssVars.name, () => {
             '--my-color-with-double-dash': 'red',
             '-my-size-with-single-dash': '2px',
         });
-        assert.strictEqual(
+        assert.strictEquals(
             String(exampleValidCssVars['--my-color-with-double-dash'].name),
             '--my-color-with-double-dash',
         );
-        assert.strictEqual(
+        assert.strictEquals(
             String(exampleValidCssVars['--my-color-with-double-dash'].value),
             'var(--my-color-with-double-dash, red)',
         );
 
-        assert.strictEqual(
+        assert.strictEquals(
             String(exampleValidCssVars['-my-size-with-single-dash'].name),
             '--my-size-with-single-dash',
         );
-        assert.strictEqual(
+        assert.strictEquals(
             String(exampleValidCssVars['-my-size-with-single-dash'].value),
             'var(--my-size-with-single-dash, 2px)',
         );
@@ -126,7 +120,7 @@ describe(defineCssVars.name, () => {
             }
         `;
 
-        const wrapperElement: HTMLDivElement = await renderFixture(html`
+        const wrapperElement: HTMLDivElement = await testWeb.render(html`
             <div class="fixture-wrapper">
                 <style>
                     ${myStyles}
@@ -143,14 +137,14 @@ describe(defineCssVars.name, () => {
         const shouldBeBlue = wrapperElement.querySelector('.defaulted');
         const shouldBeRed = wrapperElement.querySelector('.overridden');
 
-        assertInstanceOf(shouldBeBlue, HTMLSpanElement);
-        assertInstanceOf(shouldBeRed, HTMLSpanElement);
+        assert.instanceOf(shouldBeBlue, HTMLSpanElement);
+        assert.instanceOf(shouldBeRed, HTMLSpanElement);
 
-        assert.strictEqual(
+        assert.strictEquals(
             globalThis.getComputedStyle(shouldBeBlue).getPropertyValue('color'),
             'rgb(0, 0, 255)',
         );
-        assert.strictEqual(
+        assert.strictEquals(
             globalThis.getComputedStyle(shouldBeRed).getPropertyValue('color'),
             'rgb(255, 0, 0)',
         );

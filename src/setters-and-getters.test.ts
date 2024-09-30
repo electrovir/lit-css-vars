@@ -1,9 +1,9 @@
+import {assert} from '@augment-vir/assert';
 import {addPx, randomInteger} from '@augment-vir/common';
-import {assert, fixture as renderFixture} from '@open-wc/testing';
+import {describe, it, testWeb} from '@augment-vir/test';
 import {html} from 'lit';
-import {assertInstanceOf} from 'run-time-assertions';
-import {defineCssVars} from './define-css-vars';
-import {applyCssVar, readCssVarValue, setCssVarValue} from './setters-and-getters';
+import {defineCssVars} from './define-css-vars.js';
+import {applyCssVar, readCssVarValue, setCssVarValue} from './setters-and-getters.js';
 
 const exampleCssVars = defineCssVars({
     /**
@@ -18,7 +18,7 @@ const exampleProperty = 'padding-top';
 
 describe(setCssVarValue.name, () => {
     it('sets css var values', async () => {
-        const wrapperElement: HTMLDivElement = await renderFixture(html`
+        const wrapperElement: HTMLDivElement = await testWeb.render(html`
             <div
                 style=${`${exampleProperty}: ${exampleCssVars['my-var'].value}`}
                 class="fixture-wrapper"
@@ -41,24 +41,24 @@ describe(setCssVarValue.name, () => {
             .getComputedStyle(wrapperElement)
             .getPropertyValue(exampleProperty);
 
-        assert.strictEqual(
+        assert.strictEquals(
             beforeSetCssVarValue,
             exampleCssVars['my-var'].default,
             'CSS var default value was not defaulted to',
         );
-        assert.notStrictEqual(
+        assert.notStrictEquals(
             beforeSetCssVarValue,
             afterSetCssVarValue,
             'CSS var value did not change after set',
         );
-        assert.strictEqual(afterSetCssVarValue, newValue, 'CSS var was not set to give value');
+        assert.strictEquals(afterSetCssVarValue, newValue, 'CSS var was not set to give value');
     });
 });
 
 describe(applyCssVar.name, () => {
     it("uses the CSS var's value", async () => {
         const initialValue = addPx(randomInteger({min: 1, max: 100}));
-        const wrapperElement: HTMLDivElement = await renderFixture(html`
+        const wrapperElement: HTMLDivElement = await testWeb.render(html`
             <div style=${`${exampleProperty}: ${initialValue};`} class="fixture-wrapper"></div>
         `);
 
@@ -90,27 +90,27 @@ describe(applyCssVar.name, () => {
             .getComputedStyle(wrapperElement)
             .getPropertyValue(exampleProperty);
 
-        assert.strictEqual(
+        assert.strictEquals(
             beforeApplyingCssVar,
             initialValue,
             'initial style value was overwritten too early',
         );
-        assert.notStrictEqual(
+        assert.notStrictEquals(
             initialValue,
             exampleCssVars['my-var'].default,
             "initial value should not be identical to the default CSS var value cause then we can't test it",
         );
-        assert.strictEqual(
+        assert.strictEquals(
             afterApplyingCssVarComputedValue,
             exampleCssVars['my-var'].default,
             'after applying the CSS var, its default value was not used',
         );
-        assert.strictEqual(
+        assert.strictEquals(
             afterApplyingCssVarDirectValue,
             'var(--my-var, 0px)',
             'CSS var value did not change after set',
         );
-        assert.strictEqual(
+        assert.strictEquals(
             afterSetCssVarValue,
             newValue,
             'CSS var value did not propagate to recently applied property',
@@ -121,7 +121,7 @@ describe(applyCssVar.name, () => {
 describe(readCssVarValue.name, () => {
     async function createFixtureTestWithChild() {
         const cssVarValue = addPx(randomInteger({min: 1, max: 100}));
-        const wrapperElement: HTMLDivElement = await renderFixture(html`
+        const wrapperElement: HTMLDivElement = await testWeb.render(html`
             <div
                 style=${`${exampleCssVars['my-var'].name}: ${cssVarValue};`}
                 class="fixture-wrapper"
@@ -132,7 +132,7 @@ describe(readCssVarValue.name, () => {
 
         const childElement = wrapperElement.querySelector('.child-element');
 
-        assertInstanceOf(childElement, HTMLDivElement);
+        assert.instanceOf(childElement, HTMLDivElement);
 
         return {childElement, wrapperElement, cssVarValue};
     }
@@ -145,7 +145,7 @@ describe(readCssVarValue.name, () => {
             onElement: wrapperElement,
         });
 
-        assert.strictEqual(readVarValue, cssVarValue);
+        assert.strictEquals(readVarValue, cssVarValue);
     });
 
     it('does not read cascaded values if includeCascade is false', async () => {
@@ -156,7 +156,7 @@ describe(readCssVarValue.name, () => {
             onElement: childElement,
         });
 
-        assert.strictEqual(readVarValue, '', 'cascaded value should not have been read');
+        assert.strictEquals(readVarValue, '', 'cascaded value should not have been read');
     });
 
     it('reads cascaded values if includeCascade is true', async () => {
@@ -168,7 +168,7 @@ describe(readCssVarValue.name, () => {
             includeCascade: true,
         });
 
-        assert.strictEqual(
+        assert.strictEquals(
             readVarValue,
             cssVarValue,
             'cascaded value was not read when it should have been',

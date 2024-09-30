@@ -1,8 +1,10 @@
-import {SingleCssVarDefinition} from './define-css-vars';
+import {SingleCssVarDefinition} from './define-css-vars.js';
 
 /**
  * Set the given CSS var to the given value on the given element. Allows numeric values but converts
  * them to strings (since the style.setProperty API only allows strings).
+ *
+ * @category Main
  */
 export function setCssVarValue({
     onElement,
@@ -19,6 +21,8 @@ export function setCssVarValue({
 /**
  * Set the given property's value to the given CSS var on the given element, using
  * "element.style.setProperty".
+ *
+ * @category Main
  */
 export function applyCssVar({
     onElement,
@@ -41,6 +45,8 @@ export function applyCssVar({
  * WARNING: "includeCascade: true" is less performant because it runs "globalThis.getComputedStyle".
  * However, in practice I've yet to actually see this be an issue (unless you're running this in an
  * immediate infinite loop but of course don't do that).
+ *
+ * @category Main
  */
 export function readCssVarValue({
     onElement,

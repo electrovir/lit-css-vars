@@ -1,2 +1,2 @@
-export * from './define-css-vars';
-export * from './setters-and-getters';
+export * from './define-css-vars.js';
+export * from './setters-and-getters.js';

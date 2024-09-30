@@ -1,7 +1,6 @@
-import {defineCssVars} from '..';
+import {defineCssVars} from '../index.js';
 
-// expect errors because we're intentionally passing in invalid CSS var names as an example
-// @ts-expect-error
+// @ts-expect-error: expect errors because we're intentionally passing in invalid CSS var names as an example
 export const myCssVars = defineCssVars({
     // good: kebab-lower-case
     'my-var-name': 'green',

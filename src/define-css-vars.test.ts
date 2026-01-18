@@ -1,12 +1,9 @@
 import {assert} from '@augment-vir/assert';
-import {describe, it, testWeb} from '@augment-vir/test';
+import {mapObjectValues} from '@augment-vir/common';
+import {describe, it, itCases, testWeb} from '@augment-vir/test';
 import {css, html} from 'lit';
-import {
-    type CssVarName,
-    type CssVarNamesTooGenericError,
-    type CssVarsSetup,
-    defineCssVars,
-} from './define-css-vars.js';
+import {type CssVarName, defineCssVars} from './define-css-vars.js';
+import {CssVarSyntaxName, CssVarSyntaxSeparator} from './syntax.js';
 
 describe('CssVarName', () => {
     it('restricts strings', () => {
@@ -25,48 +22,99 @@ describe(defineCssVars.name, () => {
         });
         assert.tsType<keyof typeof examplesCssVars>().equals<'my-var' | 'my-var-2'>();
     });
-
-    it('creates error type when input names are too generic', () => {
-        const exampleSetup: CssVarsSetup = {
-            'my-var': 5,
-            'my-var-2': 1,
-        };
-        // @ts-expect-error: error expected if the input is too generic
-        const examplesCssVars = defineCssVars(exampleSetup);
-        assert.tsType(examplesCssVars).equals<CssVarNamesTooGenericError>();
-    });
-
-    it('errors if you actually input the error string', () => {
-        assert.throws(
-            () =>
-                defineCssVars(
-                    "Error: input CSS var names are too generic. See 'lit-css-vars' package documentation for details.",
-                ),
-            {matchConstructor: Error},
+    it('works with all supported values', () => {
+        assert.deepEquals(
+            mapObjectValues(
+                defineCssVars({
+                    'my-sting-var': 'one',
+                    'my-number-var': 2,
+                    'my-css-var': css`text-align`,
+                    'my-object-var': {
+                        default: css`3px`,
+                        syntax: CssVarSyntaxName.Length,
+                    },
+                    'my-union-var': {
+                        default: '45deg',
+                        syntax: {
+                            union: [
+                                CssVarSyntaxName.Angle,
+                                {
+                                    raw: 'auto',
+                                },
+                            ],
+                        },
+                    },
+                    'my-list-var': {
+                        default: 'blue',
+                        syntax: {
+                            list: {
+                                separator: CssVarSyntaxSeparator.Comma,
+                                values: CssVarSyntaxName.Color,
+                            },
+                        },
+                    },
+                    'my-any-var': {
+                        default: 'blue',
+                    },
+                }),
+                (key, value) => {
+                    return mapObjectValues(value, (innerKey, innerValue) => String(innerValue));
+                },
+            ),
+            {
+                'my-css-var': {
+                    default: 'text-align',
+                    name: '--my-css-var',
+                    syntax: '*',
+                    value: 'var(--my-css-var, text-align)',
+                },
+                'my-number-var': {
+                    default: '2',
+                    name: '--my-number-var',
+                    syntax: '*',
+                    value: 'var(--my-number-var, 2)',
+                },
+                'my-object-var': {
+                    default: '3px',
+                    name: '--my-object-var',
+                    syntax: '<length>',
+                    value: 'var(--my-object-var, 3px)',
+                },
+                'my-sting-var': {
+                    default: 'one',
+                    name: '--my-sting-var',
+                    syntax: '*',
+                    value: 'var(--my-sting-var, one)',
+                },
+                'my-union-var': {
+                    default: '45deg',
+                    name: '--my-union-var',
+                    syntax: '<angle> | auto',
+                    value: 'var(--my-union-var, 45deg)',
+                },
+                'my-list-var': {
+                    default: 'blue',
+                    name: '--my-list-var',
+                    syntax: '<color>#',
+                    value: 'var(--my-list-var, blue)',
+                },
+                'my-any-var': {
+                    default: 'blue',
+                    name: '--my-any-var',
+                    syntax: '*',
+                    value: 'var(--my-any-var, blue)',
+                },
+            },
         );
     });
-
-    it('errors if a non-string CSS var name key is given', () => {
-        assert.throws(
-            () => {
-                // @ts-expect-error: expect an error because the types catch that this input is invalid
-                return defineCssVars({
-                    [Symbol('bad key')]: '4px',
-                });
-            },
-            {matchConstructor: Error},
-        );
-    });
-
-    it('errors if a non-kebab-lower CSS var name key is given', () => {
-        assert.throws(
-            () => {
-                // @ts-expect-error: expect an error because the types catch that this input is invalid
-                return defineCssVars({
-                    myVar: '4px',
-                });
-            },
-            {matchConstructor: Error},
+    it('errors on invalid syntax', () => {
+        assert.throws(() =>
+            defineCssVars({
+                'my-invalid-var': {
+                    // @ts-expect-error: intentionally invalid syntax
+                    syntax: 'invalid',
+                },
+            }),
         );
     });
 
@@ -108,15 +156,15 @@ describe(defineCssVars.name, () => {
 
     it('produces valid css vars that cascade properly', async () => {
         const myVars = defineCssVars({
-            'my-color': 'blue',
+            'my-color-2': 'blue',
         });
         const myStyles = css`
             p {
-                ${myVars['my-color'].name}: red;
+                ${myVars['my-color-2'].name}: red;
             }
 
             span {
-                color: ${myVars['my-color'].value};
+                color: ${myVars['my-color-2'].value};
             }
         `;
 
@@ -149,4 +197,33 @@ describe(defineCssVars.name, () => {
             'rgb(255, 0, 0)',
         );
     });
+    itCases(defineCssVars<any>, [
+        {
+            it: 'rejects uppercase var name',
+            input: {
+                'My-Var': '3px',
+            },
+            throws: {
+                matchMessage: 'Must be lowercase',
+            },
+        },
+        {
+            it: 'rejects no dash var name',
+            input: {
+                me: '3px',
+            },
+            throws: {
+                matchMessage: 'Must have at least one dash',
+            },
+        },
+        {
+            it: 'rejects no dash var name',
+            input: {
+                [Symbol('bad')]: '3px',
+            },
+            throws: {
+                matchMessage: 'Must be string',
+            },
+        },
+    ]);
 });

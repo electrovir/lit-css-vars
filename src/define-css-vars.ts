@@ -1,60 +1,63 @@
 import {check} from '@augment-vir/assert';
-import {camelCaseToKebabCase, mapObjectValues, type Values} from '@augment-vir/common';
-import {css, type CSSResult, unsafeCSS} from 'lit';
+import {
+    addPrefix,
+    combineErrorMessages,
+    ensureErrorAndPrependMessage,
+    mapObjectValues,
+    stringify,
+    type Values,
+} from '@augment-vir/common';
+import {css, CSSResult, unsafeCSS} from 'lit';
+import {CssVarSyntaxName, type CssVarSyntax} from './syntax.js';
 
 /**
  * Lower, kebab case requirement for CSS var names.
  *
- * @category Type
+ * @category Internal
  */
 export type CssVarName = `${Lowercase<string>}-${Lowercase<string>}`;
 
 /**
+ * A native CSS property definition.
+ *
+ * @category Internal
+ */
+export type CssPropertyDefinition = {
+    /** The syntax allowed for this CSS var. This must be set for the var to be animatable. */
+    syntax?: CssVarSyntax;
+    /** The default value of this CSS var. This is also called the initial value. */
+    default: string | number | CSSResult;
+};
+
+/**
  * Base type for defineCssVars's input.
  *
- * @category Type
+ * @category Internal
  */
-export type CssVarsSetup = Readonly<Record<CssVarName, string | number | CSSResult>>;
+export type CssVarsSetup = Readonly<
+    Record<CssVarName, string | number | CssPropertyDefinition | CSSResult>
+>;
 
 /**
  * A single CSS var definition.
  *
- * @category Type
+ * @category Internal
  */
 export type SingleCssVarDefinition = {
     name: CSSResult;
     value: CSSResult;
+    syntax: string;
     default: string;
 };
 
 /**
  * Output for defineCssVars.
  *
- * @category Type
+ * @category Internal
  */
 export type CssVarDefinitions<SpecificSetup extends CssVarsSetup> = {
     [KeyName in keyof SpecificSetup]: SingleCssVarDefinition;
 };
-
-/**
- * This error string is used in a type when a CSS var's name is too generic. This happens if your
- * input to `createCssVars` is too vague. This means that specific var names can't be extracted from
- * the input object. This may happen if your input object has the vague key type of just `string`,
- * like `Record<string, string>`. You need to make sure you use `as const` or somehow prevent
- * TypeScript from broadening your input type.
- *
- * @category Error
- */
-export type CssVarNamesTooGenericError =
-    "Error: input CSS var names are too generic. See 'lit-css-vars' package documentation for details.";
-
-/**
- * This error string is used in a type when a CSS var's name is too generic. This happens if your
- * input to `createCssVars` has non-kebab-case css var names.
- *
- * @category Error
- */
-export type CssVarNamesInvalidError = 'Error: all CSS var names must be lower-kebab-case.';
 
 /**
  * Creates an easy-to-use-in-lit mapping of the given CSS Var names and defaults. The input
@@ -81,52 +84,102 @@ export function defineCssVars<const SpecificVars extends CssVarsSetup>(
      * The CSS var setup input. Keys of this input object become the CSS var names. Values of this
      * input become the default value of the CSS vars.
      */
-    setup: keyof SpecificVars extends CssVarName
-        ? CssVarName extends keyof SpecificVars
-            ? CssVarNamesTooGenericError
-            : SpecificVars
-        : CssVarNamesInvalidError,
-): keyof SpecificVars extends CssVarName
-    ? CssVarName extends keyof SpecificVars
-        ? CssVarNamesTooGenericError
-        : CssVarDefinitions<SpecificVars>
-    : CssVarNamesInvalidError {
-    if (check.isObject(setup)) {
-        const cssVarDefinitions: CssVarDefinitions<CssVarsSetup> = mapObjectValues(
-            setup,
-            (key, rawInputValue): Values<CssVarDefinitions<any>> => {
-                if (!check.isString(key)) {
-                    throw new TypeError(
-                        `Invalid CSS var name '${String(
-                            key,
-                        )}' given. CSS var names must be strings.`,
+    setup: SpecificVars,
+): CssVarDefinitions<SpecificVars> {
+    const cssVarDefinitions: CssVarDefinitions<CssVarsSetup> = mapObjectValues(
+        setup,
+        (key, rawInputValue): Values<CssVarDefinitions<any>> => {
+            assertValidCssVarName(key);
+            const value = rawInputValue as Values<CssVarsSetup>;
+
+            const defaultValue: string =
+                check.isString(value) || check.isNumber(value) || value instanceof CSSResult
+                    ? String(value)
+                    : String(value.default);
+
+            const cssVarNameCssResult = unsafeCSS(
+                addPrefix({
+                    value: key.replace(/^-+/, ''),
+                    prefix: '--',
+                }),
+            );
+
+            const finalDefinition: SingleCssVarDefinition = {
+                name: cssVarNameCssResult,
+                value: css`var(${cssVarNameCssResult}, ${unsafeCSS(defaultValue)})`,
+                syntax:
+                    check.isString(value) || check.isNumber(value) || value instanceof CSSResult
+                        ? CssVarSyntaxName.Any
+                        : createSyntaxString(value.syntax),
+                default: defaultValue,
+            };
+
+            /**
+             * This check allows this package to be imported in non-browser contexts without
+             * crashing.
+             */
+            if ('CSS' in globalThis) {
+                try {
+                    globalThis.CSS.registerProperty({
+                        inherits: true,
+                        name: String(finalDefinition.name),
+                        initialValue: finalDefinition.default,
+                        syntax: finalDefinition.syntax,
+                    });
+                } catch (error) {
+                    throw ensureErrorAndPrependMessage(
+                        error,
+                        `Failed to define CSS var: ${stringify(
+                            mapObjectValues(finalDefinition, (key, value) => String(value)),
+                            4,
+                        )}\n\n`,
                     );
                 }
-                const kebabKey = camelCaseToKebabCase(key).toLowerCase();
-                if (kebabKey !== key) {
-                    throw new Error(
-                        `Invalid CSS var name '${key}' given. CSS var names must be in lower kebab case.`,
-                    );
-                }
+            }
 
-                const defaultValue = rawInputValue as string | number | CSSResult;
+            return finalDefinition;
+        },
+    );
 
-                const cssVarNameCssResult = key.startsWith('--')
-                    ? unsafeCSS(key)
-                    : key.startsWith('-')
-                      ? css`-${unsafeCSS(key)}`
-                      : css`--${unsafeCSS(key)}`;
+    return cssVarDefinitions as any;
+}
 
-                return {
-                    name: cssVarNameCssResult,
-                    value: css`var(${cssVarNameCssResult}, ${unsafeCSS(defaultValue)})`,
-                    default: String(defaultValue),
-                };
-            },
+/**
+ * Asserts that the given string can be a valid CSS var name (excluding the `--` prefix).
+ *
+ * @category Internal
+ */
+export function assertValidCssVarName(value: unknown): asserts value is string {
+    try {
+        if (!check.isString(value)) {
+            throw new TypeError('Must be string.');
+        } else if (!value.includes('-')) {
+            throw new Error('Must have at least one dash (-).');
+        } else if (value.toLowerCase() !== value) {
+            throw new Error('Must be lowercase.');
+        }
+    } catch (error) {
+        throw new Error(
+            combineErrorMessages('Invalid CSS var name.', error, `Got '${stringify(value)}'`),
         );
+    }
+}
 
-        return cssVarDefinitions as any;
+/**
+ * Create a CSS engine compatible syntax string.
+ *
+ * @category Internal
+ */
+export function createSyntaxString(syntax: CssVarSyntax | undefined): string {
+    if (!syntax) {
+        return CssVarSyntaxName.Any;
+    } else if (check.isString(syntax)) {
+        return syntax;
+    } else if (syntax.union) {
+        return syntax.union.map((innerSyntax) => createSyntaxString(innerSyntax)).join(' | ');
+    } else if (syntax.list) {
+        return `${createSyntaxString(syntax.list.values)}${syntax.list.separator}`;
     } else {
-        throw new TypeError(`Invalid setup input for '${defineCssVars.name}' function.`);
+        return syntax.raw;
     }
 }

@@ -1,4 +1,4 @@
-import {CssVarsSetup, defineCssVars} from '../index.js';
+import {type CssVarsSetup, defineCssVars} from '../index.js';
 
 /**
  * This fails because assigning the object to type CssVarsSetup kills the specific 'my-var-name' key

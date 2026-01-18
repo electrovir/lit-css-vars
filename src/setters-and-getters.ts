@@ -1,4 +1,4 @@
-import {SingleCssVarDefinition} from './define-css-vars.js';
+import {type SingleCssVarDefinition} from './define-css-vars.js';
 
 /**
  * Set the given CSS var to the given value on the given element. Allows numeric values but converts

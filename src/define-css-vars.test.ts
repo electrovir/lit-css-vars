@@ -2,9 +2,9 @@ import {assert} from '@augment-vir/assert';
 import {describe, it, testWeb} from '@augment-vir/test';
 import {css, html} from 'lit';
 import {
-    CssVarName,
-    CssVarNamesTooGenericError,
-    CssVarsSetup,
+    type CssVarName,
+    type CssVarNamesTooGenericError,
+    type CssVarsSetup,
     defineCssVars,
 } from './define-css-vars.js';
 

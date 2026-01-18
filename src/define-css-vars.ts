@@ -1,6 +1,6 @@
 import {check} from '@augment-vir/assert';
 import {camelCaseToKebabCase, mapObjectValues, type Values} from '@augment-vir/common';
-import {css, CSSResult, unsafeCSS} from 'lit';
+import {css, type CSSResult, unsafeCSS} from 'lit';
 
 /**
  * Lower, kebab case requirement for CSS var names.

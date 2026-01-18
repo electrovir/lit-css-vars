@@ -55,7 +55,7 @@ This happens if your input to `createCssVars` is too vague. This means that spec
 <!-- example-link: src/readme-examples/keys-too-generic.example.ts -->
 
 ```TypeScript
-import {CssVarsSetup, defineCssVars} from 'lit-css-vars';
+import {type CssVarsSetup, defineCssVars} from 'lit-css-vars';
 
 /**
  * This fails because assigning the object to type CssVarsSetup kills the specific 'my-var-name' key

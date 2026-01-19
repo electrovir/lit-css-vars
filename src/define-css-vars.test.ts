@@ -66,43 +66,43 @@ describe(defineCssVars.name, () => {
                     default: 'text-align',
                     name: '--my-css-var',
                     syntax: '*',
-                    value: 'var(--my-css-var, text-align)',
+                    value: 'var(--my-css-var)',
                 },
                 'my-number-var': {
                     default: '2',
                     name: '--my-number-var',
                     syntax: '*',
-                    value: 'var(--my-number-var, 2)',
+                    value: 'var(--my-number-var)',
                 },
                 'my-object-var': {
                     default: '3px',
                     name: '--my-object-var',
                     syntax: '<length>',
-                    value: 'var(--my-object-var, 3px)',
+                    value: 'var(--my-object-var)',
                 },
                 'my-sting-var': {
                     default: 'one',
                     name: '--my-sting-var',
                     syntax: '*',
-                    value: 'var(--my-sting-var, one)',
+                    value: 'var(--my-sting-var)',
                 },
                 'my-union-var': {
                     default: '45deg',
                     name: '--my-union-var',
                     syntax: '<angle> | auto',
-                    value: 'var(--my-union-var, 45deg)',
+                    value: 'var(--my-union-var)',
                 },
                 'my-list-var': {
                     default: 'blue',
                     name: '--my-list-var',
                     syntax: '<color>#',
-                    value: 'var(--my-list-var, blue)',
+                    value: 'var(--my-list-var)',
                 },
                 'my-any-var': {
                     default: 'blue',
                     name: '--my-any-var',
                     syntax: '*',
-                    value: 'var(--my-any-var, blue)',
+                    value: 'var(--my-any-var)',
                 },
             },
         );
@@ -124,10 +124,17 @@ describe(defineCssVars.name, () => {
             'my-size': '40px',
         });
         assert.strictEquals(String(exampleValidCssVars['my-color'].name), '--my-color');
-        assert.strictEquals(String(exampleValidCssVars['my-color'].value), 'var(--my-color, blue)');
+        assert.strictEquals(String(exampleValidCssVars['my-color'].value), 'var(--my-color)');
+
+        assert.strictEquals(
+            globalThis
+                .getComputedStyle(document.body)
+                .getPropertyValue(String(exampleValidCssVars['my-color'].name)),
+            exampleValidCssVars['my-color'].default,
+        );
 
         assert.strictEquals(String(exampleValidCssVars['my-size'].name), '--my-size');
-        assert.strictEquals(String(exampleValidCssVars['my-size'].value), 'var(--my-size, 40px)');
+        assert.strictEquals(String(exampleValidCssVars['my-size'].value), 'var(--my-size)');
     });
 
     it('handles leading dashes if they exist for some reason', () => {
@@ -141,7 +148,7 @@ describe(defineCssVars.name, () => {
         );
         assert.strictEquals(
             String(exampleValidCssVars['--my-color-with-double-dash'].value),
-            'var(--my-color-with-double-dash, red)',
+            'var(--my-color-with-double-dash)',
         );
 
         assert.strictEquals(
@@ -150,7 +157,7 @@ describe(defineCssVars.name, () => {
         );
         assert.strictEquals(
             String(exampleValidCssVars['-my-size-with-single-dash'].value),
-            'var(--my-size-with-single-dash, 2px)',
+            'var(--my-size-with-single-dash)',
         );
     });
 

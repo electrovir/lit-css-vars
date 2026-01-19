@@ -8,6 +8,7 @@ import {
 } from '@augment-vir/common';
 import {css, CSSResult, unsafeCSS} from 'lit';
 import {cssPropertyRegistry} from './css-property-registry.js';
+import {setCssVarValue} from './setters-and-getters.js';
 import {CssVarSyntaxName, type CssVarSyntax} from './syntax.js';
 
 /**
@@ -126,7 +127,7 @@ export function defineCssVars<const SpecificVars extends CssVarsSetup>(
 
             const finalDefinition: SingleCssVarDefinition = {
                 name: cssVarNameCssResult,
-                value: css`var(${cssVarNameCssResult}, ${unsafeCSS(defaultValue)})`,
+                value: css`var(${cssVarNameCssResult})`,
                 syntax:
                     check.isString(value) || check.isNumber(value) || value instanceof CSSResult
                         ? CssVarSyntaxName.Any
@@ -136,12 +137,26 @@ export function defineCssVars<const SpecificVars extends CssVarsSetup>(
 
             const cssPropertyName = String(finalDefinition.name);
 
-            cssPropertyRegistry.registerProperty({
-                inherits: true,
-                name: cssPropertyName,
-                initialValue,
-                syntax: finalDefinition.syntax,
-            });
+            if (
+                cssPropertyRegistry.registerProperty({
+                    inherits: true,
+                    name: cssPropertyName,
+                    initialValue,
+                    syntax: finalDefinition.syntax,
+                })
+            ) {
+                const documentElement = (
+                    globalThis.document as typeof globalThis.document | undefined
+                )?.documentElement;
+
+                if (documentElement) {
+                    setCssVarValue({
+                        forCssVar: finalDefinition,
+                        onElement: globalThis.document.documentElement,
+                        toValue: defaultValue,
+                    });
+                }
+            }
 
             return finalDefinition;
         },

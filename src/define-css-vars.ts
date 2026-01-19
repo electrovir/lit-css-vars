@@ -2,12 +2,12 @@ import {check} from '@augment-vir/assert';
 import {
     addPrefix,
     combineErrorMessages,
-    ensureErrorAndPrependMessage,
     mapObjectValues,
     stringify,
     type Values,
 } from '@augment-vir/common';
 import {css, CSSResult, unsafeCSS} from 'lit';
+import {cssPropertyRegistry} from './css-property-registry.js';
 import {CssVarSyntaxName, type CssVarSyntax} from './syntax.js';
 
 /**
@@ -134,28 +134,14 @@ export function defineCssVars<const SpecificVars extends CssVarsSetup>(
                 default: defaultValue,
             };
 
-            /**
-             * This check allows this package to be imported in non-browser contexts without
-             * crashing.
-             */
-            if ('CSS' in globalThis) {
-                try {
-                    globalThis.CSS.registerProperty({
-                        inherits: true,
-                        name: String(finalDefinition.name),
-                        initialValue,
-                        syntax: finalDefinition.syntax,
-                    });
-                } catch (error) {
-                    throw ensureErrorAndPrependMessage(
-                        error,
-                        `Failed to define CSS var: ${stringify(
-                            mapObjectValues(finalDefinition, (key, value) => String(value)),
-                            4,
-                        )}\n\n`,
-                    );
-                }
-            }
+            const cssPropertyName = String(finalDefinition.name);
+
+            cssPropertyRegistry.registerProperty({
+                inherits: true,
+                name: cssPropertyName,
+                initialValue,
+                syntax: finalDefinition.syntax,
+            });
 
             return finalDefinition;
         },

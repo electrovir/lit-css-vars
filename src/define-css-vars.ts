@@ -137,6 +137,10 @@ export function defineCssVars<const SpecificVars extends CssVarsSetup>(
 
             const cssPropertyName = String(finalDefinition.name);
 
+            if (!initialValue) {
+                throw new Error(`Initial value for CSS var ${cssPropertyName} cannot be empty.`);
+            }
+
             if (
                 cssPropertyRegistry.registerProperty({
                     inherits: true,

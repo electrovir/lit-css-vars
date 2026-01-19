@@ -22,6 +22,17 @@ describe(defineCssVars.name, () => {
         });
         assert.tsType<keyof typeof examplesCssVars>().equals<'my-var' | 'my-var-2'>();
     });
+    it('blocks empty values', () => {
+        assert.throws(
+            () =>
+                defineCssVars({
+                    'invalid-empty-var': '',
+                }),
+            {
+                matchMessage: 'Initial value for CSS var --invalid-empty-var cannot be empty.',
+            },
+        );
+    });
     it('works with all supported values', () => {
         assert.deepEquals(
             mapObjectValues(

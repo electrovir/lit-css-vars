@@ -199,6 +199,25 @@ describe(defineCssVars.name, () => {
     });
     itCases(defineCssVars<any>, [
         {
+            it: 'errors on non-computationally independent initial value',
+            input: {
+                'bad-var-that-uses-other-vars': 'var(--my-var)',
+            },
+            throws: {
+                matchConstructor: Error,
+            },
+        },
+        {
+            it: 'allows computationally dependent default value',
+            input: {
+                'bad-var-that-uses-other-vars-2': {
+                    default: 'var(--my-var)',
+                    initialValue: '2px',
+                },
+            },
+            throws: undefined,
+        },
+        {
             it: 'rejects uppercase var name',
             input: {
                 'My-Var': '3px',

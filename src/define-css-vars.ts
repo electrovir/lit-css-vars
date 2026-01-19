@@ -18,6 +18,13 @@ import {CssVarSyntaxName, type CssVarSyntax} from './syntax.js';
 export type CssVarName = `${Lowercase<string>}-${Lowercase<string>}`;
 
 /**
+ * The possible values for defining a CSS var's default value.
+ *
+ * @category Internal
+ */
+export type CssVarValueInit = string | number | CSSResult;
+
+/**
  * A native CSS property definition.
  *
  * @category Internal
@@ -25,8 +32,19 @@ export type CssVarName = `${Lowercase<string>}-${Lowercase<string>}`;
 export type CssPropertyDefinition = {
     /** The syntax allowed for this CSS var. This must be set for the var to be animatable. */
     syntax?: CssVarSyntax;
-    /** The default value of this CSS var. This is also called the initial value. */
-    default: string | number | CSSResult;
+    /**
+     * The initial value of this CSS var when it hasn't been applied. This is only used when calling
+     * `CSS.registerProperty`. The CSS engine requires this to be computationally independent (it
+     * cannot use other CSS vars in its value).
+     *
+     * If this is not supplied, `default` is used.
+     */
+    initialValue?: CssVarValueInit;
+    /**
+     * The fallback for when this CSS var is with `myCssVars['var-name'].value` to interpolate into
+     * CSS with `var()`. This can use other CSS vars in calculations.
+     */
+    default: CssVarValueInit;
 };
 
 /**
@@ -34,9 +52,7 @@ export type CssPropertyDefinition = {
  *
  * @category Internal
  */
-export type CssVarsSetup = Readonly<
-    Record<CssVarName, string | number | CssPropertyDefinition | CSSResult>
->;
+export type CssVarsSetup = Readonly<Record<CssVarName, CssVarValueInit | CssPropertyDefinition>>;
 
 /**
  * A single CSS var definition.
@@ -96,6 +112,10 @@ export function defineCssVars<const SpecificVars extends CssVarsSetup>(
                 check.isString(value) || check.isNumber(value) || value instanceof CSSResult
                     ? String(value)
                     : String(value.default);
+            const initialValue: string =
+                check.isString(value) || check.isNumber(value) || value instanceof CSSResult
+                    ? String(value)
+                    : String(value.initialValue || value.default);
 
             const cssVarNameCssResult = unsafeCSS(
                 addPrefix({
@@ -123,7 +143,7 @@ export function defineCssVars<const SpecificVars extends CssVarsSetup>(
                     globalThis.CSS.registerProperty({
                         inherits: true,
                         name: String(finalDefinition.name),
-                        initialValue: finalDefinition.default,
+                        initialValue,
                         syntax: finalDefinition.syntax,
                     });
                 } catch (error) {

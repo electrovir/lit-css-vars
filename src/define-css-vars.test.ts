@@ -2,6 +2,7 @@ import {assert} from '@augment-vir/assert';
 import {mapObjectValues} from '@augment-vir/common';
 import {describe, it, itCases, testWeb} from '@augment-vir/test';
 import {css, html} from 'lit';
+import {cssPropertyRegistry} from './css-property-registry.js';
 import {type CssVarName, defineCssVars} from './define-css-vars.js';
 import {CssVarSyntaxName, CssVarSyntaxSeparator} from './syntax.js';
 
@@ -31,6 +32,22 @@ describe(defineCssVars.name, () => {
             {
                 matchMessage: 'Initial value for CSS var --invalid-empty-var cannot be empty.',
             },
+        );
+    });
+    it('skips registration', () => {
+        defineCssVars(
+            {
+                'unregistered-var': '2px',
+            },
+            {
+                skipRegistration: true,
+            },
+        );
+        assert.isTrue(
+            cssPropertyRegistry.registerProperty({
+                name: '--unregistered-var',
+                inherits: true,
+            }),
         );
     });
     it('works with all supported values', () => {
@@ -218,46 +235,56 @@ describe(defineCssVars.name, () => {
     itCases(defineCssVars<any>, [
         {
             it: 'errors on non-computationally independent initial value',
-            input: {
-                'bad-var-that-uses-other-vars': 'var(--my-var)',
-            },
+            inputs: [
+                {
+                    'bad-var-that-uses-other-vars': 'var(--my-var)',
+                },
+            ],
             throws: {
                 matchConstructor: Error,
             },
         },
         {
             it: 'allows computationally dependent default value',
-            input: {
-                'bad-var-that-uses-other-vars-2': {
-                    default: 'var(--my-var)',
-                    initialValue: '2px',
+            inputs: [
+                {
+                    'bad-var-that-uses-other-vars-2': {
+                        default: 'var(--my-var)',
+                        initialValue: '2px',
+                    },
                 },
-            },
+            ],
             throws: undefined,
         },
         {
             it: 'rejects uppercase var name',
-            input: {
-                'My-Var': '3px',
-            },
+            inputs: [
+                {
+                    'My-Var': '3px',
+                },
+            ],
             throws: {
                 matchMessage: 'Must be lowercase',
             },
         },
         {
             it: 'rejects no dash var name',
-            input: {
-                me: '3px',
-            },
+            inputs: [
+                {
+                    me: '3px',
+                },
+            ],
             throws: {
                 matchMessage: 'Must have at least one dash',
             },
         },
         {
             it: 'rejects no dash var name',
-            input: {
-                [Symbol('bad')]: '3px',
-            },
+            inputs: [
+                {
+                    [Symbol('bad')]: '3px',
+                },
+            ],
             throws: {
                 matchMessage: 'Must be string',
             },

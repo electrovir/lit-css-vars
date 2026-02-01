@@ -94,43 +94,43 @@ describe(defineCssVars.name, () => {
                     default: 'text-align',
                     name: '--my-css-var',
                     syntax: '*',
-                    value: 'var(--my-css-var)',
+                    value: 'var(--my-css-var, text-align)',
                 },
                 'my-number-var': {
                     default: '2',
                     name: '--my-number-var',
                     syntax: '*',
-                    value: 'var(--my-number-var)',
+                    value: 'var(--my-number-var, 2)',
                 },
                 'my-object-var': {
                     default: '3px',
                     name: '--my-object-var',
                     syntax: '<length>',
-                    value: 'var(--my-object-var)',
+                    value: 'var(--my-object-var, 3px)',
                 },
                 'my-sting-var': {
                     default: 'one',
                     name: '--my-sting-var',
                     syntax: '*',
-                    value: 'var(--my-sting-var)',
+                    value: 'var(--my-sting-var, one)',
                 },
                 'my-union-var': {
                     default: '45deg',
                     name: '--my-union-var',
                     syntax: '<angle> | auto',
-                    value: 'var(--my-union-var)',
+                    value: 'var(--my-union-var, 45deg)',
                 },
                 'my-list-var': {
                     default: 'blue',
                     name: '--my-list-var',
                     syntax: '<color>#',
-                    value: 'var(--my-list-var)',
+                    value: 'var(--my-list-var, blue)',
                 },
                 'my-any-var': {
                     default: 'blue',
                     name: '--my-any-var',
                     syntax: '*',
-                    value: 'var(--my-any-var)',
+                    value: 'var(--my-any-var, blue)',
                 },
             },
         );
@@ -148,21 +148,28 @@ describe(defineCssVars.name, () => {
 
     it('maps the given setup into useful CSS code', () => {
         const exampleValidCssVars = defineCssVars({
-            'my-color': 'blue',
-            'my-size': '40px',
+            'my-color': {
+                default: 'blue',
+                syntax: CssVarSyntaxName.Color,
+            },
+            'my-size': {
+                default: '40px',
+                syntax: CssVarSyntaxName.Length,
+            },
         });
         assert.strictEquals(String(exampleValidCssVars['my-color'].name), '--my-color');
-        assert.strictEquals(String(exampleValidCssVars['my-color'].value), 'var(--my-color)');
+        assert.strictEquals(String(exampleValidCssVars['my-color'].value), 'var(--my-color, blue)');
 
         assert.strictEquals(
             globalThis
                 .getComputedStyle(document.body)
                 .getPropertyValue(String(exampleValidCssVars['my-color'].name)),
-            exampleValidCssVars['my-color'].default,
+            /** Computed styles always return colors in rgb format. */
+            'rgb(0, 0, 255)',
         );
 
         assert.strictEquals(String(exampleValidCssVars['my-size'].name), '--my-size');
-        assert.strictEquals(String(exampleValidCssVars['my-size'].value), 'var(--my-size)');
+        assert.strictEquals(String(exampleValidCssVars['my-size'].value), 'var(--my-size, 40px)');
     });
 
     it('handles leading dashes if they exist for some reason', () => {
@@ -176,7 +183,7 @@ describe(defineCssVars.name, () => {
         );
         assert.strictEquals(
             String(exampleValidCssVars['--my-color-with-double-dash'].value),
-            'var(--my-color-with-double-dash)',
+            'var(--my-color-with-double-dash, red)',
         );
 
         assert.strictEquals(
@@ -185,7 +192,7 @@ describe(defineCssVars.name, () => {
         );
         assert.strictEquals(
             String(exampleValidCssVars['-my-size-with-single-dash'].value),
-            'var(--my-size-with-single-dash)',
+            'var(--my-size-with-single-dash, 2px)',
         );
     });
 
@@ -237,7 +244,10 @@ describe(defineCssVars.name, () => {
             it: 'errors on non-computationally independent initial value',
             inputs: [
                 {
-                    'bad-var-that-uses-other-vars': 'var(--my-var)',
+                    'bad-var-that-uses-other-vars': {
+                        default: 'var(--my-var)',
+                        syntax: CssVarSyntaxName.Length,
+                    },
                 },
             ],
             throws: {

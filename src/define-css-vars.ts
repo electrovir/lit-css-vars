@@ -125,6 +125,8 @@ export function defineCssVars<const SpecificVars extends CssVarsSetup>(
             assertValidCssVarName(key);
             const value = rawInputValue as Values<CssVarsSetup>;
 
+            const isCssPropertyDefinition = check.isObject(value) && !(value instanceof CSSResult);
+
             const defaultValue: string =
                 check.isString(value) || check.isNumber(value) || value instanceof CSSResult
                     ? String(value)
@@ -143,7 +145,7 @@ export function defineCssVars<const SpecificVars extends CssVarsSetup>(
 
             const finalDefinition: SingleCssVarDefinition = {
                 name: cssVarNameCssResult,
-                value: css`var(${cssVarNameCssResult})`,
+                value: css`var(${cssVarNameCssResult}, ${unsafeCSS(defaultValue)})`,
                 syntax:
                     check.isString(value) || check.isNumber(value) || value instanceof CSSResult
                         ? CssVarSyntaxName.Any
@@ -158,6 +160,7 @@ export function defineCssVars<const SpecificVars extends CssVarsSetup>(
             }
 
             if (
+                isCssPropertyDefinition &&
                 !options.skipRegistration &&
                 cssPropertyRegistry.registerProperty({
                     inherits: true,

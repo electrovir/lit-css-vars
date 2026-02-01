@@ -107,7 +107,7 @@ describe(applyCssVar.name, () => {
         );
         assert.strictEquals(
             afterApplyingCssVarDirectValue,
-            'var(--my-var)',
+            'var(--my-var, 0px)',
             'CSS var value did not change after set',
         );
         assert.strictEquals(

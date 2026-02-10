@@ -1,9 +1,14 @@
 import {assert} from '@augment-vir/assert';
-import {addPx, randomInteger} from '@augment-vir/common';
+import {addPx, randomInteger, randomString} from '@augment-vir/common';
 import {describe, it, testWeb} from '@augment-vir/test';
-import {html} from 'lit';
-import {defineCssVars} from './define-css-vars.js';
-import {applyCssVar, readCssVarValue, setCssVarValue} from './setters-and-getters.js';
+import {html, type TemplateResult} from 'lit';
+import {type CssVarName, defineCssVars} from './define-css-vars.js';
+import {
+    applyCssVar,
+    applyCssVarsViaStyleElement,
+    readCssVarValue,
+    setCssVarValue,
+} from './setters-and-getters.js';
 
 const exampleCssVars = defineCssVars({
     /**
@@ -172,6 +177,172 @@ describe(readCssVarValue.name, () => {
             readVarValue,
             cssVarValue,
             'cascaded value was not read when it should have been',
+        );
+    });
+});
+
+describe(applyCssVarsViaStyleElement.name, () => {
+    async function renderWithCssVars(
+        template: TemplateResult,
+        cssVarValues: Record<CssVarName, string | number | undefined>,
+    ) {
+        const wrapperElement: HTMLDivElement = await testWeb.render(template);
+        const styleKey = `test-${randomString()}`;
+        const styleElement = applyCssVarsViaStyleElement(cssVarValues, styleKey, wrapperElement);
+
+        return {wrapperElement, styleElement, styleKey};
+    }
+
+    it('creates a style element with CSS var values', async () => {
+        const cssVarValue = addPx(randomInteger({min: 1, max: 100}));
+
+        const {styleElement} = await renderWithCssVars(
+            html`
+                <div class="fixture-wrapper">
+                    <div class="child-element"></div>
+                </div>
+            `,
+            {
+                'my-var': cssVarValue,
+            },
+        );
+
+        assert.isTrue(
+            styleElement.textContent.includes('--my-var'),
+            'style element should contain the CSS var name with -- prefix',
+        );
+        assert.isTrue(
+            styleElement.textContent.includes(cssVarValue),
+            'style element should contain the CSS var value',
+        );
+    });
+
+    it('handles CSS var names that already have the -- prefix', async () => {
+        const cssVarValue = '20px';
+
+        const {styleElement} = await renderWithCssVars(
+            html`
+                <div class="fixture-wrapper"></div>
+            `,
+            {
+                '--already-prefixed': cssVarValue,
+            },
+        );
+
+        assert.isTrue(
+            styleElement.textContent.includes('--already-prefixed'),
+            'should contain the CSS var name',
+        );
+        assert.isFalse(
+            styleElement.textContent.includes('----already-prefixed'),
+            'should not double the -- prefix',
+        );
+    });
+
+    it('skips undefined and empty values', async () => {
+        const {styleElement} = await renderWithCssVars(
+            html`
+                <div class="fixture-wrapper"></div>
+            `,
+            {
+                'valid-var': '10px',
+                'undefined-var': undefined,
+                'empty-var': '',
+            },
+        );
+
+        assert.isTrue(
+            styleElement.textContent.includes('--valid-var'),
+            'should contain valid CSS var',
+        );
+        assert.isFalse(
+            styleElement.textContent.includes('--undefined-var'),
+            'should not contain undefined CSS var',
+        );
+        assert.isFalse(
+            styleElement.textContent.includes('--empty-var'),
+            'should not contain empty CSS var',
+        );
+    });
+
+    it('reuses existing style element with same key', async () => {
+        const wrapperElement: HTMLDivElement = await testWeb.render(html`
+            <div class="fixture-wrapper"></div>
+        `);
+
+        const styleKey = 'test-css-vars-reuse';
+
+        applyCssVarsViaStyleElement({'first-var': '5px'}, styleKey, wrapperElement);
+        applyCssVarsViaStyleElement({'second-var': '10px'}, styleKey, wrapperElement);
+
+        const styleElements = wrapperElement.querySelectorAll(`style#${styleKey}`);
+        assert.strictEquals(styleElements.length, 1, 'should only have one style element');
+
+        const styleElement = styleElements[0];
+        assert.instanceOf(styleElement, HTMLStyleElement);
+        assert.isTrue(
+            styleElement.textContent.includes('--second-var'),
+            'should contain the second CSS var',
+        );
+        assert.isFalse(
+            styleElement.textContent.includes('--first-var'),
+            'should have replaced the first CSS var content',
+        );
+    });
+
+    it('accepts numeric values', async () => {
+        const {styleElement} = await renderWithCssVars(
+            html`
+                <div class="fixture-wrapper"></div>
+            `,
+            {
+                'numeric-var': 42,
+            },
+        );
+
+        assert.isTrue(
+            styleElement.textContent.includes('--numeric-var: 42'),
+            'should contain the numeric value as a string',
+        );
+    });
+
+    it('applies CSS var values to the DOM', async () => {
+        const cssVarValue = addPx(randomInteger({min: 1, max: 100}));
+
+        const wrapperElement: HTMLDivElement = await testWeb.render(html`
+            <div class="fixture-wrapper">
+                <style>
+                    .test-element {
+                        padding-top: var(--applied-var);
+                    }
+                </style>
+                <div class="test-element"></div>
+            </div>
+        `);
+
+        const testElement = wrapperElement.querySelector('.test-element');
+        assert.instanceOf(testElement, HTMLElement);
+
+        const beforeValue = globalThis
+            .getComputedStyle(testElement)
+            .getPropertyValue('padding-top');
+
+        applyCssVarsViaStyleElement({'applied-var': cssVarValue}, 'test-applied', wrapperElement);
+
+        const afterValue = globalThis.getComputedStyle(testElement).getPropertyValue('padding-top');
+
+        assert.strictEquals(beforeValue, '0px', 'CSS var should not be set initially');
+        assert.strictEquals(afterValue, cssVarValue, 'CSS var value should be applied to the DOM');
+    });
+
+    it('throws an error when style key contains whitespace', async () => {
+        const wrapperElement: HTMLDivElement = await testWeb.render(html`
+            <div class="fixture-wrapper"></div>
+        `);
+
+        assert.throws(
+            () => applyCssVarsViaStyleElement({'my-var': '10px'}, 'invalid key', wrapperElement),
+            {matchMessage: 'Cannot use a style key with white space in it'},
         );
     });
 });

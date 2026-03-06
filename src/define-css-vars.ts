@@ -111,7 +111,11 @@ export function defineCssVars<const SpecificVars extends CssVarsSetup>(
             assertValidCssVarName(key);
             const value = rawInputValue as Values<CssVarsSetup>;
 
-            const isCssPropertyDefinition = check.isObject(value) && !(value instanceof CSSResult);
+            const isCssPropertyDefinition =
+                check.isObject(value) &&
+                !(value instanceof CSSResult) &&
+                /** Exclude {@link SingleCssVarDefinition}. */
+                check.lacksKey(value, 'name');
 
             const defaultValue: string =
                 check.isString(value) || check.isNumber(value) || value instanceof CSSResult

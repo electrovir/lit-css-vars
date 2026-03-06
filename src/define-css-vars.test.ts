@@ -1,7 +1,7 @@
 import {assert} from '@augment-vir/assert';
 import {mapObjectValues} from '@augment-vir/common';
 import {describe, it, itCases, testWeb} from '@augment-vir/test';
-import {css, html} from 'lit';
+import {css, html, unsafeCSS} from 'lit';
 import {type CssVarDefinitions, type CssVarName, defineCssVars} from './define-css-vars.js';
 import {CssVarSyntaxName, CssVarSyntaxSeparator} from './syntax.js';
 
@@ -192,17 +192,35 @@ describe(defineCssVars.name, () => {
             >
         >();
 
-        const myVars2 = defineCssVars(myVars1);
+        const myVars2 = defineCssVars({
+            ...myVars1,
+
+            'my-color-3': 'red',
+        });
 
         assert.tsType(myVars2).equals<
             Readonly<
                 CssVarDefinitions<{
                     'my-color-2': 'blue';
+                    'my-color-3': 'red';
                 }>
             >
         >();
 
-        assert.deepEquals(myVars1, myVars2);
+        assert.deepEquals(myVars2, {
+            'my-color-2': {
+                default: 'blue',
+                name: unsafeCSS('--my-color-2'),
+                syntax: '*',
+                value: css`var(${unsafeCSS('--my-color-2')}, ${unsafeCSS('blue')})`,
+            },
+            'my-color-3': {
+                default: 'red',
+                name: unsafeCSS('--my-color-3'),
+                syntax: '*',
+                value: css`var(${unsafeCSS('--my-color-3')}, ${unsafeCSS('red')})`,
+            },
+        });
     });
 
     it('produces valid css vars that cascade properly', async () => {

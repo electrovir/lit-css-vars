@@ -53,7 +53,9 @@ export type CssPropertyDefinition = {
  *
  * @category Internal
  */
-export type CssVarsSetup = Readonly<Record<CssVarName, CssVarValueInit | CssPropertyDefinition>>;
+export type CssVarsSetup = Readonly<
+    Record<CssVarName, CssVarValueInit | CssPropertyDefinition | SingleCssVarDefinition>
+>;
 
 /**
  * A single CSS var definition.
@@ -101,7 +103,7 @@ export function defineCssVars<const SpecificVars extends CssVarsSetup>(
      * The CSS var setup input. Keys of this input object become the CSS var names. Values of this
      * input become the default value of the CSS vars.
      */
-    setup: SpecificVars | CssVarDefinitions<SpecificVars>,
+    setup: SpecificVars,
 ): CssVarDefinitions<SpecificVars> {
     const cssVarDefinitions: CssVarDefinitions<CssVarsSetup> = mapObjectValues(
         setup,
@@ -118,7 +120,7 @@ export function defineCssVars<const SpecificVars extends CssVarsSetup>(
             const initialValue: string =
                 check.isString(value) || check.isNumber(value) || value instanceof CSSResult
                     ? String(value)
-                    : String(value.initialValue || value.default);
+                    : String(('initialValue' in value && value.initialValue) || value.default);
 
             const cssVarNameCssResult = unsafeCSS(
                 addPrefix({
@@ -133,7 +135,7 @@ export function defineCssVars<const SpecificVars extends CssVarsSetup>(
                 syntax:
                     check.isString(value) || check.isNumber(value) || value instanceof CSSResult
                         ? CssVarSyntaxName.Any
-                        : createSyntaxString(value.syntax),
+                        : createSyntaxString('syntax' in value ? value.syntax : undefined),
                 default: defaultValue,
             };
 
@@ -198,7 +200,7 @@ export function assertValidCssVarName(value: unknown): asserts value is string {
  *
  * @category Internal
  */
-export function createSyntaxString(syntax: CssVarSyntax | undefined): string {
+export function createSyntaxString(syntax: CssVarSyntax | string | undefined): string {
     if (!syntax) {
         return CssVarSyntaxName.Any;
     } else if (check.isString(syntax)) {

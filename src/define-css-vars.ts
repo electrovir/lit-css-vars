@@ -4,7 +4,6 @@ import {
     combineErrorMessages,
     mapObjectValues,
     stringify,
-    type PartialWithUndefined,
     type Values,
 } from '@augment-vir/common';
 import {css, CSSResult, unsafeCSS} from 'lit';
@@ -78,20 +77,6 @@ export type CssVarDefinitions<SpecificSetup extends CssVarsSetup> = {
 };
 
 /**
- * Options for {@link defineCssVars}.
- *
- * @category Internal
- */
-export type DefineCssVarsOptions = PartialWithUndefined<{
-    /**
-     * If set to `true`, the CSS vars will not be registered with the browser's CSS engine.
-     *
-     * @default false
-     */
-    skipRegistration: boolean;
-}>;
-
-/**
  * Creates an easy-to-use-in-lit mapping of the given CSS Var names and defaults. The input
  * determines the CSS var names and their default values. The output is a mapping of the CSS var
  * names to name and value objects that can be easily interpolated into lit's css keyed template
@@ -116,8 +101,7 @@ export function defineCssVars<const SpecificVars extends CssVarsSetup>(
      * The CSS var setup input. Keys of this input object become the CSS var names. Values of this
      * input become the default value of the CSS vars.
      */
-    setup: SpecificVars,
-    options: DefineCssVarsOptions = {},
+    setup: SpecificVars | CssVarDefinitions<SpecificVars>,
 ): CssVarDefinitions<SpecificVars> {
     const cssVarDefinitions: CssVarDefinitions<CssVarsSetup> = mapObjectValues(
         setup,
@@ -161,7 +145,6 @@ export function defineCssVars<const SpecificVars extends CssVarsSetup>(
 
             if (
                 isCssPropertyDefinition &&
-                !options.skipRegistration &&
                 cssPropertyRegistry.registerProperty({
                     inherits: true,
                     name: cssPropertyName,

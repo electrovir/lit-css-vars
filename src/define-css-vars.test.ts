@@ -2,8 +2,7 @@ import {assert} from '@augment-vir/assert';
 import {mapObjectValues} from '@augment-vir/common';
 import {describe, it, itCases, testWeb} from '@augment-vir/test';
 import {css, html} from 'lit';
-import {cssPropertyRegistry} from './css-property-registry.js';
-import {type CssVarName, defineCssVars} from './define-css-vars.js';
+import {type CssVarDefinitions, type CssVarName, defineCssVars} from './define-css-vars.js';
 import {CssVarSyntaxName, CssVarSyntaxSeparator} from './syntax.js';
 
 describe('CssVarName', () => {
@@ -32,22 +31,6 @@ describe(defineCssVars.name, () => {
             {
                 matchMessage: 'Initial value for CSS var --invalid-empty-var cannot be empty.',
             },
-        );
-    });
-    it('skips registration', () => {
-        defineCssVars(
-            {
-                'unregistered-var': '2px',
-            },
-            {
-                skipRegistration: true,
-            },
-        );
-        assert.isTrue(
-            cssPropertyRegistry.registerProperty({
-                name: '--unregistered-var',
-                inherits: true,
-            }),
         );
     });
     it('works with all supported values', () => {
@@ -196,6 +179,32 @@ describe(defineCssVars.name, () => {
         );
     });
 
+    it('allows composition', () => {
+        const myVars1 = defineCssVars({
+            'my-color-2': 'blue',
+        });
+
+        assert.tsType(myVars1).equals<
+            Readonly<
+                CssVarDefinitions<{
+                    'my-color-2': 'blue';
+                }>
+            >
+        >();
+
+        const myVars2 = defineCssVars(myVars1);
+
+        assert.tsType(myVars2).equals<
+            Readonly<
+                CssVarDefinitions<{
+                    'my-color-2': 'blue';
+                }>
+            >
+        >();
+
+        assert.deepEquals(myVars1, myVars2);
+    });
+
     it('produces valid css vars that cascade properly', async () => {
         const myVars = defineCssVars({
             'my-color-2': 'blue',
@@ -242,59 +251,49 @@ describe(defineCssVars.name, () => {
     itCases(defineCssVars<any>, [
         {
             it: 'errors on non-computationally independent initial value',
-            inputs: [
-                {
-                    'bad-var-that-uses-other-vars': {
-                        default: 'var(--my-var)',
-                        syntax: CssVarSyntaxName.Length,
-                    },
+            input: {
+                'bad-var-that-uses-other-vars': {
+                    default: 'var(--my-var)',
+                    syntax: CssVarSyntaxName.Length,
                 },
-            ],
+            },
             throws: {
                 matchConstructor: Error,
             },
         },
         {
             it: 'allows computationally dependent default value',
-            inputs: [
-                {
-                    'bad-var-that-uses-other-vars-2': {
-                        default: 'var(--my-var)',
-                        initialValue: '2px',
-                    },
+            input: {
+                'bad-var-that-uses-other-vars-2': {
+                    default: 'var(--my-var)',
+                    initialValue: '2px',
                 },
-            ],
+            },
             throws: undefined,
         },
         {
             it: 'rejects uppercase var name',
-            inputs: [
-                {
-                    'My-Var': '3px',
-                },
-            ],
+            input: {
+                'My-Var': '3px',
+            },
             throws: {
                 matchMessage: 'Must be lowercase',
             },
         },
         {
             it: 'rejects no dash var name',
-            inputs: [
-                {
-                    me: '3px',
-                },
-            ],
+            input: {
+                me: '3px',
+            },
             throws: {
                 matchMessage: 'Must have at least one dash',
             },
         },
         {
             it: 'rejects no dash var name',
-            inputs: [
-                {
-                    [Symbol('bad')]: '3px',
-                },
-            ],
+            input: {
+                [Symbol('bad')]: '3px',
+            },
             throws: {
                 matchMessage: 'Must be string',
             },

@@ -34,7 +34,12 @@ describe(setCssVarValue.name, () => {
             .getComputedStyle(wrapperElement)
             .getPropertyValue(exampleProperty);
 
-        const newValue = addPx(randomInteger({min: 1, max: 100}));
+        const newValue = addPx(
+            randomInteger({
+                min: 1,
+                max: 100,
+            }),
+        );
 
         setCssVarValue({
             forCssVar: exampleCssVars['my-var'],
@@ -62,7 +67,12 @@ describe(setCssVarValue.name, () => {
 
 describe(applyCssVar.name, () => {
     it("uses the CSS var's value", async () => {
-        const initialValue = addPx(randomInteger({min: 1, max: 100}));
+        const initialValue = addPx(
+            randomInteger({
+                min: 1,
+                max: 100,
+            }),
+        );
         const wrapperElement: HTMLDivElement = await testWeb.render(html`
             <div style=${`${exampleProperty}: ${initialValue};`} class="fixture-wrapper"></div>
         `);
@@ -83,7 +93,12 @@ describe(applyCssVar.name, () => {
         const afterApplyingCssVarDirectValue =
             wrapperElement.style.getPropertyValue(exampleProperty);
 
-        const newValue = addPx(randomInteger({min: 1, max: 100}));
+        const newValue = addPx(
+            randomInteger({
+                min: 1,
+                max: 100,
+            }),
+        );
 
         setCssVarValue({
             forCssVar: exampleCssVars['my-var'],
@@ -125,7 +140,12 @@ describe(applyCssVar.name, () => {
 
 describe(readCssVarValue.name, () => {
     async function createFixtureTestWithChild() {
-        const cssVarValue = addPx(randomInteger({min: 1, max: 100}));
+        const cssVarValue = addPx(
+            randomInteger({
+                min: 1,
+                max: 100,
+            }),
+        );
         const wrapperElement: HTMLDivElement = await testWeb.render(html`
             <div
                 style=${`${exampleCssVars['my-var'].name}: ${cssVarValue};`}
@@ -139,7 +159,11 @@ describe(readCssVarValue.name, () => {
 
         assert.instanceOf(childElement, HTMLDivElement);
 
-        return {childElement, wrapperElement, cssVarValue};
+        return {
+            childElement,
+            wrapperElement,
+            cssVarValue,
+        };
     }
 
     it('directly reads CSS var values', async () => {
@@ -190,11 +214,20 @@ describe(applyCssVarsViaStyleElement.name, () => {
         const styleKey = `test-${randomString()}`;
         const styleElement = applyCssVarsViaStyleElement(cssVarValues, styleKey, wrapperElement);
 
-        return {wrapperElement, styleElement, styleKey};
+        return {
+            wrapperElement,
+            styleElement,
+            styleKey,
+        };
     }
 
     it('creates a style element with CSS var values', async () => {
-        const cssVarValue = addPx(randomInteger({min: 1, max: 100}));
+        const cssVarValue = addPx(
+            randomInteger({
+                min: 1,
+                max: 100,
+            }),
+        );
 
         const {styleElement} = await renderWithCssVars(
             html`
@@ -272,8 +305,20 @@ describe(applyCssVarsViaStyleElement.name, () => {
 
         const styleKey = 'test-css-vars-reuse';
 
-        applyCssVarsViaStyleElement({'first-var': '5px'}, styleKey, wrapperElement);
-        applyCssVarsViaStyleElement({'second-var': '10px'}, styleKey, wrapperElement);
+        applyCssVarsViaStyleElement(
+            {
+                'first-var': '5px',
+            },
+            styleKey,
+            wrapperElement,
+        );
+        applyCssVarsViaStyleElement(
+            {
+                'second-var': '10px',
+            },
+            styleKey,
+            wrapperElement,
+        );
 
         const styleElements = wrapperElement.querySelectorAll(`style#${styleKey}`);
         assert.strictEquals(styleElements.length, 1, 'should only have one style element');
@@ -307,7 +352,12 @@ describe(applyCssVarsViaStyleElement.name, () => {
     });
 
     it('applies CSS var values to the DOM', async () => {
-        const cssVarValue = addPx(randomInteger({min: 1, max: 100}));
+        const cssVarValue = addPx(
+            randomInteger({
+                min: 1,
+                max: 100,
+            }),
+        );
 
         const wrapperElement: HTMLDivElement = await testWeb.render(html`
             <div class="fixture-wrapper">
@@ -327,7 +377,13 @@ describe(applyCssVarsViaStyleElement.name, () => {
             .getComputedStyle(testElement)
             .getPropertyValue('padding-top');
 
-        applyCssVarsViaStyleElement({'applied-var': cssVarValue}, 'test-applied', wrapperElement);
+        applyCssVarsViaStyleElement(
+            {
+                'applied-var': cssVarValue,
+            },
+            'test-applied',
+            wrapperElement,
+        );
 
         const afterValue = globalThis.getComputedStyle(testElement).getPropertyValue('padding-top');
 
@@ -341,8 +397,17 @@ describe(applyCssVarsViaStyleElement.name, () => {
         `);
 
         assert.throws(
-            () => applyCssVarsViaStyleElement({'my-var': '10px'}, 'invalid key', wrapperElement),
-            {matchMessage: 'Cannot use a style key with white space in it'},
+            () =>
+                applyCssVarsViaStyleElement(
+                    {
+                        'my-var': '10px',
+                    },
+                    'invalid key',
+                    wrapperElement,
+                ),
+            {
+                matchMessage: 'Cannot use a style key with white space in it',
+            },
         );
     });
 });

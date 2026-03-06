@@ -106,7 +106,10 @@ export function applyCssVarsViaStyleElement(
                 return [];
             }
 
-            const key = addPrefix({value: cssVarName, prefix: '--'});
+            const key = addPrefix({
+                value: cssVarName,
+                prefix: '--',
+            });
 
             return [
                 `    ${key}: ${value};`,

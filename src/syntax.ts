@@ -1,4 +1,4 @@
-import {type RequireExactlyOne} from 'type-fest';
+import {type RequireExactlyOne} from '@augment-vir/common';
 
 /**
  * All CSS formats supported by `@property`, at of the time of this writing.

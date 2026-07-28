@@ -195,6 +195,9 @@ export function assertValidCssVarName(value: unknown): asserts value is string {
     } catch (error) {
         throw new Error(
             combineErrorMessages('Invalid CSS var name.', error, `Got '${stringify(value)}'`),
+            {
+                cause: error,
+            },
         );
     }
 }
